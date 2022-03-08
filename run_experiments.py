@@ -53,7 +53,7 @@ def run_init_method(experiment, sample, model, params):
 if __name__ == '__main__':
     
     # Printing to logfile
-    sys.stdout = Logger(sys.stdout, 'logfile.txt')
+    sys.stdout = Logger(sys.stdout, 'logs/logfile.txt')
 
     # Start counter of queries
     settings.init_queries()
