@@ -5,14 +5,14 @@ import random
 np.random.seed(CFG.SEED)
 random.seed(CFG.SEED)
 
+from init_methods import get_start_image
+
 from build_model import ResnetModel50
 from hsja import hsja
 from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
 import settings
 from datetime import datetime
-from init_methods.random_init import get_random_noise
-from init_methods.par import get_par_patches
 from init_methods.utils import binary_search, Logger, compute_distance
 from imagenet_classes import class_names
 import sys
@@ -39,22 +39,6 @@ def run_hsja(model, samples, sample_perturbed):
                         max_num_evals = 1e4,
                         init_num_evals = 100)
     return perturbed
-
-def run_init_method(experiment, sample, model, params):
-
-    if experiment == "random":
-        start_image = get_random_noise(model, params)
-    elif experiment == "naive":
-        start_image = get_naive_noise(sample, model, params)
-    elif experiment == "shuffle_random":
-        start_image = get_random_shuffle(sample, model, params)
-    elif experiment == "par":
-        start_image = get_par_patches(sample, model, params)
-        #pred_label = np.argmax(model.predict(start_image))
-    
-    return start_image
-
-
 
 if __name__ == '__main__':
     
@@ -102,7 +86,11 @@ if __name__ == '__main__':
             print("\nExperiment {} \n".format(experiment))
 
             # Running init_method based on experiment
-            start_image = run_init_method(experiment, sample, model, params)
+            start_image = get_start_image(
+                experiment=experiment,
+                sample=sample,
+                model=model,
+                params=params)
             
 
             # Conduct Binary Search
