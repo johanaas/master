@@ -1,6 +1,12 @@
+import config as CFG
+
+import numpy as np
+import random
+np.random.seed(CFG.SEED)
+random.seed(CFG.SEED)
+
 from build_model import ResnetModel50
 from hsja import hsja
-import numpy as np
 from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
 import settings
@@ -57,13 +63,12 @@ if __name__ == '__main__':
 
     # Start counter of queries
     settings.init_queries()
-    settings.max_queries = 250
-
 
     model = ResnetModel50() # [ ResnetModel50(), ResnetModel101() ]
-    x_test = load_imagenet(2)
 
-    experiments = ["random", "par"]
+    x_test = load_imagenet(num_images=CFG.NUM_IMAGES)
+
+    experiments = CFG.EXPERIMENTS
 
     eval_start = {}
     eval_end = {}
