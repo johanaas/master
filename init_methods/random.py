@@ -1,4 +1,4 @@
-from init_methods.utils import decision_function
+from utils import decision_function
 import numpy as np
 from matplotlib import pyplot as plt
 import copy

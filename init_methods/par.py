@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import cv2
 import numpy as np
-from init_methods.utils import decision_function
+from utils import decision_function
 
 #############################################################################
 #                                                                           #
@@ -12,9 +12,18 @@ from init_methods.utils import decision_function
 #############################################################################
 
 def get_par_patches(img, model, params, plot_each_step=False):
-    """ Returns random noise on important patches identified
+    """Returns random noise on important patches identified
     through querying the model. The returned image is between
     [0, 1] and is the noise overlayed on the original image
+
+    Args:
+        img (nd.array): Original image
+        model (_type_): Model to query
+        params (_type_): HSJA params
+        plot_each_step (bool, optional): Whether to plot each stage of PAR or not. Defaults to False.
+
+    Returns:
+        nd.array: An adversarial version of the original image with noise patches
     """
     assert img.shape[0] == img.shape[1]
     img_width = img.shape[0]

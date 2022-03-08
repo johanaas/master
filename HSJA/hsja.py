@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import settings
-from init_methods.utils import decision_function, clip_image, compute_distance
+from utils import decision_function, clip_image, compute_distance
 
 def hsja(model, 
 	sample,

@@ -13,7 +13,7 @@ from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
 import settings
 from datetime import datetime
-from init_methods.utils import binary_search, Logger, compute_distance
+from utils import binary_search, Logger, compute_distance
 from imagenet_classes import class_names
 import sys
 
