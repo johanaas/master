@@ -26,7 +26,7 @@ def construct_original_network(dataset_name, model_name, train):
 	channel = 3
 
 	assert model_name == 'resnet'
-	from resnet import resnet_v2, lr_schedule,  lr_schedule_sgd
+	from HSJA.resnet import resnet_v2, lr_schedule,  lr_schedule_sgd
 	
 	model, image_ph, preds = resnet_v2(input_shape=(input_size, input_size,
 	 channel), depth=20, num_classes = num_classes)

@@ -98,7 +98,7 @@ def split_data(x, y, model, num_classes = 10, split_rate = 0.8, sample_per_class
 
 if __name__ == '__main__':
 	import argparse
-	from build_model import ImageModel
+	from HSJA.build_model import ImageModel
 	parser = argparse.ArgumentParser()
 
 	parser.add_argument('--dataset_name', type = str, 

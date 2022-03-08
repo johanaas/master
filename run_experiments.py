@@ -7,8 +7,8 @@ random.seed(CFG.SEED)
 
 from init_methods import get_start_image
 
-from build_model import ResnetModel50
-from hsja import hsja
+from HSJA.build_model import ResnetModel50
+from HSJA.hsja import hsja
 from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
 import settings

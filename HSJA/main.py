@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function 
 
 
-from build_model import ImageModel 
-from load_data import ImageData, split_data
-from hsja import hsja
+from HSJA.build_model import ImageModel 
+from HSJA.load_data import ImageData, split_data
+from HSJA.hsja import hsja
 import numpy as np
 import tensorflow as tf
 import sys
