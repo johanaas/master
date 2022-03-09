@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import cv2
 import numpy as np
 from init_methods.utils import decision_function
+import settings
 
 #############################################################################
 #                                                                           #
@@ -61,6 +62,9 @@ def remove_noise(img, noise, patch, model, params, plot_each_step=False):
             # Remove noise in the area to check
             noise_img = np.copy(noise)
             noise_img[start_x:end_x, start_y:end_y, :] = img[start_x:end_x, start_y:end_y, :]
+
+            if settings.queries >= settings.circle_queries:
+                break
 
             # Predict with noise removed on the area to check
             if decision_function(model,noise_img[None], params)[0]: #np.argmax(model.predict(noise_img)) != params["original_label"]:
