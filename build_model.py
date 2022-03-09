@@ -125,9 +125,9 @@ class ResnetModel50():
         settings.queries += len(prob)
         return prob
 
-class ResnetModel101():
+class VGGModel19():
     def __init__(self):
-        self.model = keras.applications.ResNet101(
+        self.model = keras.applications.vgg19.VGG19(
             include_top=True, 
             weights='imagenet', 
             input_tensor=None, 
