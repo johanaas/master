@@ -1,4 +1,4 @@
-from build_model import ResnetModel50
+from build_model import ResnetModel50, VGGModel19
 from hsja import hsja
 import numpy as np
 from load_imagenet import load_imagenet
@@ -7,7 +7,8 @@ import settings
 from datetime import datetime
 from init_methods.random_init import get_random_noise
 from init_methods.par import get_par_patches
-from init_methods.utils import binary_search, Logger, compute_distance
+from init_methods.circles import get_circles_perturb
+from init_methods.utils import binary_search, Logger, compute_distance, decision_function
 from imagenet_classes import class_names
 import sys
 
@@ -38,8 +39,10 @@ def run_init_method(experiment, sample, model, params):
 
     if experiment == "random":
         start_image = get_random_noise(model, params)
-    elif experiment == "naive":
-        start_image = get_naive_noise(sample, model, params)
+    elif experiment == "circles":
+        settings.circle_queries = 0
+        start_image = get_circles_perturb(sample, model, params)
+        settings.circle_queries = settings.queries
     elif experiment == "shuffle_random":
         start_image = get_random_shuffle(sample, model, params)
     elif experiment == "par":
@@ -57,24 +60,26 @@ if __name__ == '__main__':
 
     # Start counter of queries
     settings.init_queries()
-    settings.max_queries = 250
+    settings.max_queries = 1000
 
 
-    model = ResnetModel50() # [ ResnetModel50(), ResnetModel101() ]
+    model = ResnetModel50() # [ ResnetModel50(), VGGModel19() ]
     x_test = load_imagenet(2)
 
-    experiments = ["random", "par"]
+    experiments = ["circles", "par"]
 
+    eval_perturb = {}
     eval_start = {}
     eval_end = {}
 
     for experiment in experiments:
         eval_start[experiment] = []
         eval_end[experiment] = []
+        eval_perturb[experiment] = []
 
     
 
-    fig, axs = plt.subplots(len(experiments))
+    #fig, axs = plt.subplots(len(experiments))
     
     for i, sample in enumerate(x_test):
         original_label = np.argmax(model.predict(sample))
@@ -98,7 +103,10 @@ if __name__ == '__main__':
 
             # Running init_method based on experiment
             start_image = run_init_method(experiment, sample, model, params)
-            
+            pert_dist = compute_distance(start_image, sample)
+            print("Start perturbation: ", pert_dist)
+            eval_perturb[experiment].append(pert_dist)
+            print("\n\n QUERIES: {} \n\n".format(settings.queries))
 
             # Conduct Binary Search
             bs_img = binary_search(model, sample, start_image, params)
@@ -128,6 +136,8 @@ if __name__ == '__main__':
             print("End mean for experiment {}: ".format(exp), np.median(eval_end[exp]))
             print("Start avg for experiment {}: ".format(exp), np.mean(eval_start[exp]))
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
+            print("Perturb avg for experiment {}: ".format(exp), np.median(eval_perturb[exp]))
+            print("Perturb avg for experiment {}: ".format(exp), np.mean(eval_perturb[exp]))
             print("-------------------")
 
         fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
