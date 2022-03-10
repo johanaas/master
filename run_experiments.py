@@ -42,8 +42,16 @@ def run_hsja(model, samples, sample_perturbed):
 
 if __name__ == '__main__':
     
-    # Printing to logfile
-    sys.stdout = Logger(sys.stdout, 'logs/logfile.txt')
+    if CFG.LOG_DIR is not None:
+      logfile_path = "{}/{}_cap{}_{}imgs_{}_{}.txt".format(
+        CFG.LOG_DIR,
+        "_".join(CFG.EXPERIMENTS),
+        CFG.MAX_NUM_QUERIES,
+        CFG.NUM_IMAGES,
+        CFG.DATASET,
+        CFG.MODEL
+      )
+      sys.stdout = Logger(sys.stdout, logfile_path)
 
     # Start counter of queries
     settings.init_queries()

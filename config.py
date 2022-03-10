@@ -25,3 +25,8 @@ NUM_IMAGES = 1
 # The model to use
 # Supported values: "resnet50 | resnet101"
 MODEL = "resnet101"
+
+# If not None all print statements are written to a logfile
+# The directory has to be manually created, and the logfile
+# is automatically created inside the directory
+LOG_DIR = "logs"
