@@ -6,8 +6,8 @@ np.random.seed(CFG.SEED)
 random.seed(CFG.SEED)
 
 from init_methods import get_start_image
+from models import get_model
 
-from HSJA.build_model import ResnetModel50
 from HSJA.hsja import hsja
 from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # Start counter of queries
     settings.init_queries()
 
-    model = ResnetModel50() # [ ResnetModel50(), ResnetModel101() ]
+    model = get_model(CFG.MODEL)
 
     x_test = load_imagenet(num_images=CFG.NUM_IMAGES)
 

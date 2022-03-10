@@ -20,3 +20,8 @@ MAX_NUM_QUERIES = 250
 # An adversarial example is generated for each image
 # per experiment
 NUM_IMAGES = 1
+
+
+# The model to use
+# Supported values: "resnet50 | resnet101"
+MODEL = "resnet101"
