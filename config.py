@@ -8,7 +8,7 @@ SEED = 69
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["par"]
+EXPERIMENTS = ["random"]
 
 
 # Max number of model queries allowed. Attack breaks if
@@ -24,7 +24,13 @@ NUM_IMAGES = 1
 
 # The model to use
 # Supported values: "resnet50 | resnet101"
-MODEL = "resnet101"
+MODEL = "resnet50"
+
+
+# The dataset to use
+# Supported values: "imagenet | cifar10 | cifar100 | mnist"
+DATASET = "imagenet"
+
 
 # If not None all print statements are written to a logfile
 # The directory has to be manually created, and the logfile

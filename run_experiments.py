@@ -7,9 +7,9 @@ random.seed(CFG.SEED)
 
 from init_methods import get_start_image
 from models import get_model
+from datasets import get_dataset
 
 from HSJA.hsja import hsja
-from load_imagenet import load_imagenet
 from matplotlib import pyplot as plt
 import settings
 from datetime import datetime
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     model = get_model(CFG.MODEL)
 
-    x_test = load_imagenet(num_images=CFG.NUM_IMAGES)
+    data = get_dataset(CFG.DATASET, CFG.NUM_IMAGES)
 
     experiments = CFG.EXPERIMENTS
 
@@ -73,18 +73,18 @@ if __name__ == '__main__':
 
     fig, axs = plt.subplots(len(experiments))
     
-    for i, sample in enumerate(x_test):
+    for i, sample in enumerate(data):
         original_label = np.argmax(model.predict(sample))
         print("-----------------------------------------------")
-        print("Attacking sample nr {} / {}".format(i+1, len(x_test)))
+        print("Attacking sample nr {} / {}".format(i+1, CFG.NUM_IMAGES))
         print("Time: ", datetime.now())
 
         params = {
                 "original_label": original_label,
                 "target_label": None,
-                "clip_min": 0,
-                "clip_max": 1,
-                "shape": (224,224,3)
+                "clip_min": 0.0,
+                "clip_max": 1.0,
+                "shape": sample.shape
         }
 
         for j, experiment in enumerate(experiments):
@@ -124,7 +124,7 @@ if __name__ == '__main__':
             #plt.show()
 
         for exp in experiments:
-            print("Image number {} / {}".format(i+1, len(x_test)))
+            print("Image number {} / {}".format(i+1, CFG.NUM_IMAGES))
             print("Start mean for experiment {}: ".format(exp), np.median(eval_start[exp]))
             print("End mean for experiment {}: ".format(exp), np.median(eval_end[exp]))
             print("Start avg for experiment {}: ".format(exp), np.mean(eval_start[exp]))
