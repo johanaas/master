@@ -2,7 +2,7 @@ from utils import decision_function
 import numpy as np
 from matplotlib import pyplot as plt
 import copy
-import settings
+import query_counter
 
 def get_random_noise(model, params):
     np.random.seed(69)
@@ -12,7 +12,7 @@ def get_random_noise(model, params):
         random_noise = np.random.uniform(params['clip_min'], 
             params['clip_max'], size = params['shape'])
         success = decision_function(model,random_noise[None], params)[0]
-        settings.queries = 0
+        query_counter.queries = 0
         num_evals += 1
         if success:
             break

@@ -11,7 +11,7 @@ from datasets import get_dataset
 
 from HSJA.hsja import hsja
 from matplotlib import pyplot as plt
-import settings
+import query_counter
 from datetime import datetime
 from utils import binary_search, Logger, compute_distance
 from imagenet_classes import class_names
@@ -54,7 +54,7 @@ if __name__ == '__main__':
       sys.stdout = Logger(sys.stdout, logfile_path)
 
     # Start counter of queries
-    settings.init_queries()
+    query_counter.init_queries()
 
     model = get_model(CFG.MODEL)
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
         for j, experiment in enumerate(experiments):
             # Resetting query counter for each experiment
-            settings.queries = 0
+            query_counter.queries = 0
             
             print("\nExperiment {} \n".format(experiment))
 

@@ -15,7 +15,7 @@ from keras import optimizers
 import math
 import keras
 
-import settings
+import query_counter
 
 def construct_original_network(dataset_name, model_name, train): 
 	data_model = dataset_name + model_name
@@ -122,7 +122,7 @@ class ResnetModel50():
         else:
             _x = x
         prob = self.model.predict(_x, batch_size = batch_size)
-        settings.queries += len(prob)
+        query_counter.queries += len(prob)
         return prob
 
 class ResnetModel101():
@@ -142,7 +142,7 @@ class ResnetModel101():
         else:
             _x = x
         prob = self.model.predict(_x, batch_size = batch_size)
-        settings.queries += len(prob)
+        query_counter.queries += len(prob)
         return prob
 
 

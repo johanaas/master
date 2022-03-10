@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
-import settings
+import query_counter
 from utils import decision_function, clip_image, compute_distance
 
 def hsja(model, 
@@ -92,8 +92,8 @@ def hsja(model,
 	for j in np.arange(params['num_iterations']):
 		params['cur_iter'] = j + 1
 
-		if settings.queries > settings.max_queries:
-			print("Max queries: ", settings.queries)
+		if query_counter.queries > query_counter.max_queries:
+			print("Max queries: ", query_counter.queries)
 			break
 		# Choose delta.
 		delta = select_delta(params, dist_post_update)
