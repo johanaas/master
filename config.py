@@ -31,6 +31,9 @@ MODEL = "resnet50"
 # Supported values: "imagenet | cifar10 | cifar100 | mnist"
 DATASET = "imagenet"
 
+# The path to the manually downloaded imagenet dataset
+IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
+
 
 # If not None all print statements are written to a logfile
 # The directory has to be manually created, and the logfile

@@ -2,10 +2,11 @@ import cv2
 import numpy as np
 import random
 import os
+import config as CFG
 
 
 def load_imagenet(num_images):
-    path = r"D:\Kim\dev\ILSVRC2012_img_test_v10102019\test"
+    path = CFG.IMAGENET_PATH
     random.seed(69)
     random_filenames = random.sample([
         x for x in os.listdir(path)
