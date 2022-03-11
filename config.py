@@ -8,7 +8,7 @@ SEED = 69
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par", "deconvolute"]
-EXPERIMENTS = ["par", "deconvolute"]
+EXPERIMENTS = ["deconvolute", "par"]
 
 
 # Max number of model queries allowed. Attack breaks if

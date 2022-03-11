@@ -1,15 +1,25 @@
 import numpy as np
+from utils import decision_function
 
-def deconvolute(original_image, noisy_image):
-    img = np.copy(original_image)
+def deconvolute(original_image, noisy_image, model, params):
 
-    mask = (img[:, :, :] != noisy_image[:, :, :])
+    mask = (original_image[:, :, :] != noisy_image[:, :, :])
 
-    for i in range(original_image.shape[0]):
-        for j in range(original_image.shape[1]):
-            if np.any(mask[i, j]):
-                spread(img, i, j, noisy_image[i, j, :])
-    return img
+    for blend in range(0.1, 1.1, 0.1):
+        img = np.copy(original_image)
+
+        for i in range(img.shape[0]):
+            for j in range(img.shape[1]):
+                if np.any(mask[i, j]):
+                    spread(img, i, j, noisy_image[i, j, :], blend=blend)
+        
+        if decision_function(model, img[None], params)[0]:
+            return img
+            
+    print("Deconvolute could not find an adversarial image. Using the same image as PAR.")
+    return original_image
+
+
 
 def spread(img, x, y, value, blend=0.5, filter_size=3):
     min_x = 0

@@ -13,6 +13,6 @@ def get_start_image(
   elif experiment == "par":
     return get_par_patches(sample, model, params)
   elif experiment == "deconvolute":
-    return deconvolute(sample, get_par_patches(sample, model, params))
+    return deconvolute(sample, get_par_patches(sample, model, params), model, params)
   else:
     raise ValueError("No init method with the name:", experiment)
