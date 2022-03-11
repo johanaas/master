@@ -1,138 +1,134 @@
-from __future__ import absolute_import, division, print_function 
+import config as CFG
 
-
-from build_model import ImageModel 
-from load_data import ImageData, split_data
-from hsja import hsja
 import numpy as np
-import tensorflow as tf
+import random
+np.random.seed(CFG.SEED)
+random.seed(CFG.SEED)
+
+from init_methods import get_start_image
+from models import get_model
+from datasets import get_dataset
+
+from HSJA.hsja import hsja
+from matplotlib import pyplot as plt
+import query_counter
+from datetime import datetime
+from utils import binary_search, Logger, compute_distance
+from imagenet_classes import class_names
 import sys
-import os
-import pickle
-import argparse
-import scipy
-import itertools
 
-def construct_model_and_data(args):
-	"""
-	Load model and data on which the attack is carried out.
-	Assign target classes and images for targeted attack.
-	"""
-	data_model = args.dataset_name + args.model_name
-	dataset = ImageData(args.dataset_name)
-	x_test, y_test = dataset.x_val, dataset.y_val
-	reference = - dataset.x_train_mean
-	model = ImageModel(args.model_name, args.dataset_name, 
-		train = False, load = True)
-
-	# Split the test dataset into two parts.
-	# Use the first part for setting target image for targeted attack.
-	x_train, y_train, x_test, y_test = split_data(x_test, y_test, model, 
-		num_classes = model.num_classes, split_rate = 0.5, 
-		sample_per_class = np.min([np.max([200, args.num_samples // 10 * 3]),
-		 1000]))
-
-	outputs = {'data_model': data_model,
-				'x_test': x_test,
-				'y_test': y_test,
-				'model': model,
-				'clip_max': 1.0,
-				'clip_min': 0.0
-				}
-
-	if args.attack_type == 'targeted':
-		# Assign target class and image for targeted atttack.
-		label_train = np.argmax(y_train, axis = 1)
-		label_test = np.argmax(y_test, axis = 1)
-		x_train_by_class = [x_train[label_train == i] for i in range(model.num_classes)]
-		target_img_by_class = np.array([x_train_by_class[i][0] for i in range(model.num_classes)])
-		np.random.seed(0)
-		target_labels = [np.random.choice([j for j in range(model.num_classes) if j != label]) for label in label_test]
-		target_img_ids = [np.random.choice(len(x_train_by_class[target_label])) for target_label in target_labels]
-		target_images = [x_train_by_class[target_labels[j]][target_img_id] for j, target_img_id in enumerate(target_img_ids)]
-		outputs['target_labels'] = target_labels
-		outputs['target_images'] = target_images
-
-	return outputs
+def run_hsja(model, samples, sample_perturbed):
 
 
-def attack(args):
-	outputs = construct_model_and_data(args)
-	data_model = outputs['data_model']
-	x_test = outputs['x_test']
-	y_test = outputs['y_test']
-	model = outputs['model']
-	clip_max = outputs['clip_max']
-	clip_min = outputs['clip_min']
-	if args.attack_type == 'targeted':
-		target_labels = outputs['target_labels']
-		target_images = outputs['target_images']
+    target_label = None
+    target_image = None
 
-	for i, sample in enumerate(x_test[:args.num_samples]):
-		label = np.argmax(y_test[i])
+    #print('attacking the {}th sample...'.format(i))
 
-		if args.attack_type == 'targeted':
-			target_label = target_labels[i]
-			target_image = target_images[i]
-		else:
-			target_label = None
-			target_image = None
-
-		print('attacking the {}th sample...'.format(i))
-
-		perturbed = hsja(model, 
-							sample, 
-							clip_max = 1, 
-							clip_min = 0, 
-							constraint = args.constraint, 
-							num_iterations = args.num_iterations, 
-							gamma = 1.0, 
-							target_label = target_label, 
-							target_image = target_image, 
-							stepsize_search = args.stepsize_search, 
-							max_num_evals = 1e4,
-							init_num_evals = 100)
-
-		image = np.concatenate([sample, np.zeros((32,8,3)), perturbed], axis = 1)
-		scipy.misc.imsave('{}/figs/{}-{}-{}.jpg'.format(data_model, 
-			args.attack_type, args.constraint, i), image)
-
+    perturbed = hsja(model, 
+                        sample,
+                        sample_perturbed,
+                        clip_max = 1, 
+                        clip_min = 0, 
+                        constraint = "l2", 
+                        num_iterations = 25, 
+                        gamma = 1.0, 
+                        target_label = None, 
+                        target_image = None, 
+                        stepsize_search = "geometric_progression", 
+                        max_num_evals = 1e4,
+                        init_num_evals = 100)
+    return perturbed
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
+    
+    if CFG.LOG_DIR is not None:
+      logfile_path = "{}/{}_cap{}_{}imgs_{}_{}.txt".format(
+        CFG.LOG_DIR,
+        "_".join(CFG.EXPERIMENTS),
+        CFG.MAX_NUM_QUERIES,
+        CFG.NUM_IMAGES,
+        CFG.DATASET,
+        CFG.MODEL
+      )
+      sys.stdout = Logger(sys.stdout, logfile_path)
 
-	parser.add_argument('--dataset_name', type = str, 
-		choices = ['cifar10'], 
-		default = 'cifar10') 
+    # Start counter of queries
+    query_counter.init_queries()
 
-	parser.add_argument('--model_name', type = str, 
-		choices = ['resnet'], 
-		default = 'resnet') 
+    model = get_model(CFG.MODEL)
 
-	parser.add_argument('--constraint', type = str, 
-		choices = ['l2', 'linf'], 
-		default = 'l2') 
+    data = get_dataset(CFG.DATASET, CFG.NUM_IMAGES)
 
-	parser.add_argument('--attack_type', type = str, 
-		choices = ['targeted', 'untargeted'], 
-		default = 'untargeted') 
+    experiments = CFG.EXPERIMENTS
 
-	parser.add_argument('--num_samples', type = int, 
-		default = 10) 
+    eval_start = {}
+    eval_end = {}
 
-	parser.add_argument('--num_iterations', type = int, 
-		default = 64) 
-	parser.add_argument('--stepsize_search', type = str, 
-		choices = ['geometric_progression', 'grid_search'], 
-		default = 'geometric_progression')
+    for experiment in experiments:
+        eval_start[experiment] = []
+        eval_end[experiment] = []
 
-	args = parser.parse_args()
-	dict_a = vars(args)
+    
 
-	data_model = args.dataset_name + args.model_name
-	if not os.path.exists(data_model):
-		os.mkdir(data_model)
-	if not os.path.exists('{}/figs'.format(data_model)):
-		os.mkdir('{}/figs'.format(data_model))
+    fig, axs = plt.subplots(len(experiments))
+    
+    for i, sample in enumerate(data):
+        original_label = np.argmax(model.predict(sample))
+        print("-----------------------------------------------")
+        print("Attacking sample nr {} / {}".format(i+1, CFG.NUM_IMAGES))
+        print("Time: ", datetime.now())
 
-	attack(args)
+        params = {
+                "original_label": original_label,
+                "target_label": None,
+                "clip_min": 0.0,
+                "clip_max": 1.0,
+                "shape": sample.shape
+        }
+
+        for j, experiment in enumerate(experiments):
+            # Resetting query counter for each experiment
+            query_counter.queries = 0
+            
+            print("\nExperiment {} \n".format(experiment))
+
+            # Running init_method based on experiment
+            start_image = get_start_image(
+                experiment=experiment,
+                sample=sample,
+                model=model,
+                params=params)
+            
+
+            # Conduct Binary Search
+            bs_img = binary_search(model, sample, start_image, params)
+            init_dist = compute_distance(bs_img, sample)
+            eval_start[experiment].append(init_dist)
+            print("Init ditance: ", init_dist)
+
+            # Run HSJA attack method
+            final_img = run_hsja(model, sample, bs_img)
+            eval_end[experiment].append(compute_distance(final_img, sample))
+            
+            # Saving computed images to folder /results
+            result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
+            axs[j].imshow(result_image)
+            #plt.imshow(result_image)
+            axs[j].title.set_text("Original image ({}) - After Init by {} ({}) - After Binary Search ({}) - After HSJA ({})".format(
+                class_names[original_label],
+                experiment, 
+                class_names[np.argmax(model.predict(start_image))], 
+                class_names[np.argmax(model.predict(bs_img))], 
+                class_names[np.argmax(model.predict(final_img))]))
+            #plt.show()
+
+        for exp in experiments:
+            print("Image number {} / {}".format(i+1, CFG.NUM_IMAGES))
+            print("Start mean for experiment {}: ".format(exp), np.median(eval_start[exp]))
+            print("End mean for experiment {}: ".format(exp), np.median(eval_end[exp]))
+            print("Start avg for experiment {}: ".format(exp), np.mean(eval_start[exp]))
+            print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
+            print("-------------------")
+
+        fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
