@@ -21,7 +21,7 @@ def deconvolute(original_image, noisy_image, model, params):
 
 
 
-def spread(img, x, y, value, blend=0.5, filter_size=3):
+def spread(img, x, y, value, blend=0.5, filter_size=7):
     min_x = 0
     min_y = 0
     max_x = img.shape[0]
@@ -29,8 +29,8 @@ def spread(img, x, y, value, blend=0.5, filter_size=3):
 
     for i in range(filter_size):
         for j in range(filter_size):
-            filter_pixel_x = x - 1 + i
-            filter_pixel_y = y - 1 + j
+            filter_pixel_x = x - (filter_size // 2) + i
+            filter_pixel_y = y - (filter_size // 2) + j
 
             if not min_x <= filter_pixel_x < max_x or not min_y <= filter_pixel_y < max_y:
                 continue
