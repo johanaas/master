@@ -1,1 +1,0 @@
-iteration: 3, l2 distance 3.0809E+01
