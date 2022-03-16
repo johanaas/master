@@ -4,7 +4,7 @@ from skimage.io import imread, imshow
 from skimage.color import rgb2hsv, rgb2gray, rgb2yuv
 from skimage import color, exposure, transform
 from skimage.exposure import equalize_hist
-from init_methods.utils import decision_function
+from utils import decision_function
 import cv2
 import scipy.fftpack as fp
 import copy

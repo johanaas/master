@@ -8,6 +8,7 @@ random.seed(CFG.SEED)
 from init_methods import get_start_image
 from models import get_model
 from datasets import get_dataset
+from evaluation import start_eval_experiment, init_plotting, add_dist_queries, plot_all_experiments, plot_median
 
 from HSJA.hsja import hsja
 from matplotlib import pyplot as plt
@@ -62,6 +63,8 @@ if __name__ == '__main__':
 
     experiments = CFG.EXPERIMENTS
 
+    init_plotting(experiments)
+
     eval_start = {}
     eval_end = {}
 
@@ -71,7 +74,7 @@ if __name__ == '__main__':
 
     
 
-    fig, axs = plt.subplots(len(experiments))
+    #fig, axs = plt.subplots(len(experiments))
     
     for i, sample in enumerate(data):
         original_label = np.argmax(model.predict(sample))
@@ -90,6 +93,8 @@ if __name__ == '__main__':
         for j, experiment in enumerate(experiments):
             # Resetting query counter for each experiment
             query_counter.queries = 0
+            start_eval_experiment(experiment)
+
             
             print("\nExperiment {} \n".format(experiment))
 
@@ -106,22 +111,25 @@ if __name__ == '__main__':
             init_dist = compute_distance(bs_img, sample)
             eval_start[experiment].append(init_dist)
             print("Init ditance: ", init_dist)
+            add_dist_queries(init_dist)
 
             # Run HSJA attack method
             final_img = run_hsja(model, sample, bs_img)
             eval_end[experiment].append(compute_distance(final_img, sample))
             
             # Saving computed images to folder /results
-            result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
-            axs[j].imshow(result_image)
+            #result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
+            #axs[j].imshow(result_image)
             #plt.imshow(result_image)
-            axs[j].title.set_text("Original image ({}) - After Init by {} ({}) - After Binary Search ({}) - After HSJA ({})".format(
-                class_names[original_label],
-                experiment, 
-                class_names[np.argmax(model.predict(start_image))], 
-                class_names[np.argmax(model.predict(bs_img))], 
-                class_names[np.argmax(model.predict(final_img))]))
+            #axs[j].title.set_text("Original image ({}) - After Init by {} ({}) - After Binary Search ({}) - After HSJA ({})".format(
+            #    class_names[original_label],
+            #    experiment, 
+            #    class_names[np.argmax(model.predict(start_image))], 
+            #    class_names[np.argmax(model.predict(bs_img))], 
+            #    class_names[np.argmax(model.predict(final_img))]))
             #plt.show()
+
+        
 
         for exp in experiments:
             print("Image number {} / {}".format(i+1, CFG.NUM_IMAGES))
@@ -130,5 +138,8 @@ if __name__ == '__main__':
             print("Start avg for experiment {}: ".format(exp), np.mean(eval_start[exp]))
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
             print("-------------------")
+        
+    plot_all_experiments(experiments)
+    plot_median(experiments)
 
-        fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+        #fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))

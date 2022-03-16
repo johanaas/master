@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import query_counter
+from evaluation import add_dist_queries
 from utils import decision_function, clip_image, compute_distance
 
 def hsja(model, 
@@ -141,6 +142,9 @@ def hsja(model,
 		dist = compute_distance(perturbed, sample, constraint)
 		if verbose:
 			print('iteration: {:d}, {:s} distance {:.4E}'.format(j+1, constraint, dist))
+		
+		# Append dist for evaluation
+		add_dist_queries(dist)
 
 	return perturbed
 
