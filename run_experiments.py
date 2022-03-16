@@ -7,7 +7,7 @@ import settings
 from datetime import datetime
 from init_methods.random_init import get_random_noise
 from init_methods.par import get_par_patches
-from init_methods.fourier import fourier_transform_rgb
+from init_methods.fourier import fourier_transform_rgb, get_fourier_perturbation
 from init_methods.utils import binary_search, Logger, compute_distance, decision_function
 from imagenet_classes import class_names
 import sys
@@ -68,7 +68,7 @@ def run_init_method(experiment, sample, model, params):
     elif experiment == "naive":
         start_image = get_naive_noise(sample, model, params)
     elif experiment == "fourier":
-        start_image = fourier_transform_rgb(sample, model, params)
+        start_image = get_fourier_perturbation(sample, model, params)
     elif experiment == "par":
         start_image = get_par_patches(sample, model, params)
         #pred_label = np.argmax(model.predict(start_image))
@@ -84,11 +84,11 @@ if __name__ == '__main__':
 
     # Start counter of queries
     settings.init_queries()
-    settings.max_queries = 250
+    settings.max_queries = 1000
 
 
     model = ResnetModel50() # [ ResnetModel50(), ResnetModel101() ]
-    x_test = load_imagenet(4)
+    x_test = load_imagenet(100)
 
     experiments = ["fourier", "random", "par"]
 
@@ -126,11 +126,16 @@ if __name__ == '__main__':
             # Running init_method based on experiment
             start_image = run_init_method(experiment, sample, model, params)
             print("Adversarial before BS: ", decision_function(model,start_image[None], params)[0])
-            assert decision_function(model,start_image[None], params)[0] == True
-
+            #assert decision_function(model,start_image[None], params)[0] == True
+            if decision_function(model,start_image[None], params)[0] == False:
+                
+                print("\n\n\n\n\n\n\n\n\n\n\n --------------- NOT ADVERSARIAL START IMAGE ----------------- \n\n\n\n\n\n\n\n\n\n\n\n")
+                plt.imshow(start_image)
+                plt.show()
+                continue
             # Look at fourier:
             #show_fourier(sample, start_image)
-
+            #print("Max, min: ", np.max(start_image), np.min(start_image))
 
 
             # Conduct Binary Search
@@ -140,7 +145,7 @@ if __name__ == '__main__':
             print("Init ditance: ", init_dist)
 
             # Run HSJA attack method
-            final_img = bs_img#run_hsja(model, sample, bs_img)
+            final_img = run_hsja(model, sample, bs_img)
             eval_end[experiment].append(compute_distance(final_img, sample))
             
             # Saving computed images to folder /results
@@ -153,7 +158,7 @@ if __name__ == '__main__':
                 class_names[np.argmax(model.predict(start_image))], 
                 class_names[np.argmax(model.predict(bs_img))], 
                 class_names[np.argmax(model.predict(final_img))]))
-        plt.show()
+        #plt.show()
 
         for exp in experiments:
             print("Image number {} / {}".format(i+1, len(x_test)))

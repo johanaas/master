@@ -9,18 +9,84 @@ import cv2
 import scipy.fftpack as fp
 import copy
 
-"""
-dark_image = imread('dark_img.png')
 
-dark_image_grey = rgb2gray(dark_image)
-plt.figure(num=None, figsize=(8, 6), dpi=80)
-plt.imshow(dark_image_grey, cmap='gray')
 
-dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(dark_image_grey))
-plt.figure(num=None, figsize=(8, 6), dpi=80)
-plt.imshow(np.log(abs(dark_image_grey_fourier)), cmap='gray')
-plt.show()
-"""
+
+def get_fourier_perturbation(img, model, params):
+
+    bgr_img = cv2.cvtColor(np.float32(img), cv2.COLOR_RGB2BGR)
+
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+
+    # Lets mess around with y
+
+    f = np.fft.fft2(y)
+    f_shift = np.fft.fftshift(f)
+    magnitude_spectrum = np.log(np.abs(f_shift))
+
+    #plt.imshow(y, cmap='gray')
+    #plt.imshow(magnitude_spectrum, cmap='gray')
+    #plt.show()
+    radius = 26
+    while radius > 2:
+
+        band_mask = np.zeros((224,224))
+        #print(f_shift.shape, band_mask.shape)
+        band_mask[110:114,110:114] = 1
+        cv2.circle(band_mask, (112,112), radius, 1, -1)
+        #plt.imshow(band_mask)
+        #plt.show()
+
+        zero_mask = (band_mask != 1)
+
+        f_perturb = f_shift
+        f_perturb[zero_mask] = 0
+        #f_mag = np.log(np.abs(f_perturb))
+        #plt.imshow(f_mag, cmap='gray')
+        #plt.show()
+
+        back_shift = np.fft.ifftshift(f_perturb)
+        back_y = np.float32(np.fft.ifft2(back_shift).real) # abs and float32
+        
+
+        #print(back_y)
+        img_merge = np.dstack([back_y, u, v])  #cv2.merge((back_y,u,v)) #np.dstack([back_y, u, v]) 
+        #print("img_merge- max, min: ", np.max(img_merge), np.min(img_merge))
+        bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+        #print("max, min: ", np.max(bgr_img_back), np.min(bgr_img_back))
+        img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+        img_back = np.clip(img_back, 0,1)
+
+        #print("max, min: ", np.max(img_back), np.min(img_back))
+        #plt.imshow(img_back)
+        #plt.show()
+
+        if decision_function(model,img_back[None], params)[0]:
+            # Adversarial
+            return img_back
+        else:
+            radius -= 2
+            print("Radius: ", radius)
+            #plt.imshow(img_back)
+            #plt.show()
+            if radius == 2:
+                f_perturb = np.zeros((224,224))
+                back_shift = np.fft.ifftshift(f_perturb)
+                back_y = np.float32(np.fft.ifft2(back_shift).real)
+                img_merge = np.dstack([back_y, u, v])
+                bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+                img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+                img_back = np.clip(img_back, 0,1)
+
+    return img_back
+
+
+def make_lut_u():
+    return np.array([[[i,255-i,0] for i in range(256)]],dtype=np.uint8)
+
+def make_lut_v():
+    return np.array([[[0,255-i,i] for i in range(256)]],dtype=np.uint8)
 
 
 def fourier_transform_rgb(img, model, params):
@@ -55,20 +121,83 @@ def fourier_transform_rgb(img, model, params):
     #arr2im(touint8(freq), 'freq.png')
     #print("max, min: ", np.max(freq), np.min(freq))
     scaled_freq = touint8(freq)
-    plt.imshow(scaled_freq)
-    plt.show()
+    #plt.imshow(scaled_freq)
+    #plt.show()
     shifted = np.fft.fftshift(scaled_freq)
     #plt.imshow(shifted)
     #plt.show()
 
-
+    """
 
     f = np.fft.fft2(cv2.cvtColor(np.float32(data), cv2.COLOR_RGB2GRAY))
     f_shift = np.fft.fftshift(f)
-    magnitude_spectrum = 20*np.log(np.abs(f_shift))
+    magnitude_spectrum = np.log(np.abs(f_shift))
     print("max, min: ", np.max(magnitude_spectrum), np.min(magnitude_spectrum))
-    #plt.imshow(magnitude_spectrum)
+    plt.imshow(magnitude_spectrum)
+    plt.show()
+    mag_back = np.fft.ifftshift(magnitude_spectrum)
+    #img_back = np.fft.ifft2(mag_back, cv2.COLOR_GRAY2RGB)
+    img_back = np.fft.ifft2(f, cv2.COLOR_GRAY2RGB)
+    plt.imshow(img_back)
+    plt.show()
+
+    """
+    
+    
+
+
+    #img = cv2.imread('shed.png')
+    bgr_img = cv2.cvtColor(np.float32(img), cv2.COLOR_RGB2BGR)
+
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+
+    # Lets mess around with y
+
+    f = np.fft.fft2(y)
+    f_shift = np.fft.fftshift(f)
+    magnitude_spectrum = np.log(np.abs(f_shift))
+
+    #plt.imshow(y, cmap='gray')
+    #plt.imshow(magnitude_spectrum, cmap='gray')
     #plt.show()
+
+    band_mask = np.zeros((224,224))
+    #print(f_shift.shape, band_mask.shape)
+    band_mask[110:114,110:114] = 1
+    cv2.circle(band_mask, (112,112), 25, 1, -1)
+    #plt.imshow(band_mask)
+    #plt.show()
+
+    zero_mask = (band_mask != 1)
+
+    f_perturb = f_shift
+    f_perturb[zero_mask] = 0
+    #f_mag = np.log(np.abs(f_perturb))
+    #plt.imshow(f_mag, cmap='gray')
+    #plt.show()
+
+    back_shift = np.fft.ifftshift(f_perturb)
+    back_y = np.float32(np.abs(np.fft.ifft2(back_shift)))
+
+    #print(back_y.shape)
+    #print("max, min: ", np.max(back_y), np.min(back_y))
+    #print(y.shape)
+    #print("max, min: ", np.max(y), np.min(y))
+    #print(u.shape)
+    #print("max, min: ", np.max(u), np.min(u))
+    #print(v.shape)
+    #print("max, min: ", np.max(v), np.min(v))
+
+    img_merge = np.dstack([back_y, u, v])  #cv2.merge((back_y,u,v)) #np.dstack([back_y, u, v]) 
+    img_back = np.abs(cv2.cvtColor(img_merge, cv2.COLOR_YUV2RGB))
+
+    #print("max, min: ", np.max(img_back), np.min(img_back))
+    #plt.imshow(img_back)
+    #plt.show()
+
+    return img_back
+
     #print("max, min: ", np.max(scaled_freq), np.min(scaled_freq))
     #print("max, min: ", np.max(scaled_freq), np.min(scaled_freq))
     #log_scaled_freq = np.log(scaled_freq)
@@ -88,9 +217,12 @@ def fourier_transform_rgb(img, model, params):
     #band_pass_mask[:28,14:28,:] = 0
 
     # Finding optimal band pass
+    """
     widthx = 16
 
     startx = 16
+
+
     
     for j in range(1,10):
         band_pass_mask = np.ones((224,224,3))
@@ -117,18 +249,57 @@ def fourier_transform_rgb(img, model, params):
             #plt.show()
             print("Adversarial: ", decision_function(model,img_back[None] / 255, params)[0])
             break
+    """
+    # Convert img to luminace
 
-            
-    
-    plt.imshow(band_pass_mask)
+
+    # Find maximum noise
+    band_pass_mask = np.zeros((224,224,3))
+    band_pass_mask[:2,:2,:] = 1
+    band_pass_mask[200:,200:,:] = 1
+    img_back = touint8(freq2im(freq * band_pass_mask))
+    plt.imshow(img_back)
     plt.show()
+    return img_back
+
+    mask_size = 16
+    startx = mask_size
+    while mask_size < 224:
+        band_pass_mask = np.ones((224,224,3))
+        startx += mask_size
+        print("startx: ", startx)
+        #Make band filter
+        for i in range(0,startx,int(mask_size/2)):
+            band_pass_mask[ i:i+mask_size, (startx - mask_size)-i:startx-i,:] = 0
+            img_back = touint8(freq2im(freq * band_pass_mask))
+    
+        # Check if perturbation is not adversarial
+        if not decision_function(model,img_back[None] / 255, params)[0]:
+            if startx == (mask_size+mask_size):
+                # If first step: increase mask_size
+                mask_size = mask_size * 2
+                startx = mask_size
+                print("startx: ", startx)
+            else:
+                # Take one step back: Cause we know thats adversarial
+                startx -= mask_size
+                band_pass_mask = np.ones((224,224,3))
+                print("startx: ", startx)
+                for i in range(0,startx,int(mask_size/2)):
+                    band_pass_mask[ i:i+mask_size, (startx - mask_size)-i:startx-i,:] = 0
+                    img_back = touint8(freq2im(freq * band_pass_mask))
+                print("Adversarial: ", decision_function(model,img_back[None] / 255, params)[0])
+                break
+
+    #plt.imshow(band_pass_mask)
+    #plt.show()
 
     #img_back = touint8(freq2im(freq * band_pass_mask))
     #print("max, min: ", np.max(img_back), np.min(img_back))
     #img_back = output.shape[1::-1]
     #print("Adversarial: ", decision_function(model,img_back[None] / 255, params)[0])
-    plt.imshow(img_back)
-    plt.show()
+    #plt.imshow(img_back)
+    #plt.show()
 
     """
     # Make frequency-image of cat photo
