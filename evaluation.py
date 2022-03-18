@@ -32,8 +32,8 @@ def plot_all_experiments(experiements):
         for line in qc.eval_exp[exp]:
             extract_xy = list(zip(*line))
             plt.plot(extract_xy[1], extract_xy[0], "{}-".format(list_of_colors[i]))
-    plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
-    plt.show()
+    #plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    #plt.show()
 
 
 def plot_median(experiements):
@@ -68,4 +68,4 @@ def plot_median(experiements):
         #print("y: ", y)
         plt.plot(x, y, "{}-".format(list_of_colors[i]))
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
-    plt.show()
+    #plt.show()

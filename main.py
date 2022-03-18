@@ -139,7 +139,7 @@ if __name__ == '__main__':
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
             print("-------------------")
         
-    plot_all_experiments(experiments)
+    #plot_all_experiments(experiments)
     plot_median(experiments)
 
         #fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))

@@ -19,7 +19,7 @@ MAX_NUM_QUERIES = 250
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 3
+NUM_IMAGES = 50
 
 
 # The model to use
