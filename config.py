@@ -8,7 +8,7 @@ SEED = 69
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["random"]
+EXPERIMENTS = ["random", "par", "fourier"]
 
 
 # Max number of model queries allowed. Attack breaks if
@@ -19,7 +19,7 @@ MAX_NUM_QUERIES = 250
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 1
+NUM_IMAGES = 50
 
 
 # The model to use
@@ -39,3 +39,7 @@ IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
 # The directory has to be manually created, and the logfile
 # is automatically created inside the directory
 LOG_DIR = "logs"
+
+
+# Collect distance and queries in order to plot graphs
+RUN_EVAL = True
