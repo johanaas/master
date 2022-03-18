@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import query_counter
+import config as CFG
 from evaluation import add_dist_queries
 from utils import decision_function, clip_image, compute_distance
 
@@ -144,7 +145,8 @@ def hsja(model,
 			print('iteration: {:d}, {:s} distance {:.4E}'.format(j+1, constraint, dist))
 		
 		# Append dist for evaluation
-		add_dist_queries(dist)
+		if CFG.RUN_EVAL:
+			add_dist_queries(dist)
 
 	return perturbed
 

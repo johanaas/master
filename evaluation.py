@@ -3,6 +3,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import itertools
 from datetime import datetime
+from utils import decision_function
+from imagenet_classes import class_names
+import os
 
 def init_plotting(experiements):
     for exp in experiements:
@@ -21,7 +24,8 @@ def add_dist_queries(dist):
     # Append tuple (distance, #queries )
     qc.eval_exp[qc.active_exp][-1].append((dist, qc.queries))
 
-def plot_all_experiments(experiements):
+def plot_all_experiments(path, experiements):
+    plt.clf()
     list_of_colors = ["k", "r", "c", "m", "y", "b"]
     assert len(list_of_colors) >= len(experiements)
 
@@ -34,10 +38,11 @@ def plot_all_experiments(experiements):
             plt.plot(extract_xy[1], extract_xy[0], "{}-".format(list_of_colors[i]))
     #plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     #plt.show()
+    plt.savefig(path + "/plot_all_exps.png")
 
 
-def plot_median(experiements):
-
+def plot_median(path, experiements):
+    plt.clf()
     list_of_colors = ["k", "r", "c", "m", "y", "b"]
     assert len(list_of_colors) >= len(experiements)
 
@@ -67,5 +72,28 @@ def plot_median(experiements):
         
         #print("y: ", y)
         plt.plot(x, y, "{}-".format(list_of_colors[i]))
-    plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    #plt.savefig(path + "/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    plt.savefig(path + "/plot_of_medians.png")
     #plt.show()
+
+def save_experiment_image(model, path, iteration, original_img, init_pert, boundary_pert, final_pert):
+    plt.clf()
+    result_image = np.concatenate([original_img, 
+    np.zeros((original_img.shape[0],8,3)), 
+    init_pert, 
+    np.zeros((original_img.shape[0],8,3)), 
+    boundary_pert, 
+    np.zeros((original_img.shape[0],8,3)), 
+    final_pert], 
+    axis = 1)
+
+    plt.imshow(result_image)
+    plt.title(
+        "original: ({}) - init_pert: ({}) - boundary_pert: ({}) - final_pert ({})".format(
+        class_names[np.argmax(model.predict(original_img))],
+        class_names[np.argmax(model.predict(init_pert))], 
+        class_names[np.argmax(model.predict(boundary_pert))], 
+        class_names[np.argmax(model.predict(final_pert))])
+        )
+    plt.savefig(path + "/attack_process_imgs/" + "iteration_"+ str(iteration) + "_" + qc.active_exp)
+        
