@@ -10,6 +10,59 @@ import scipy.fftpack as fp
 import copy
 
 
+def check_fourier_pertubation(img, model, params):
+    band_mask = np.ones((224,224))
+    radius = 0
+    cv2.circle(band_mask, (112,112), 112, 1, -1)
+    #cv2.circle(band_mask, (112,112), radius, 0, -1)
+
+    mask = (band_mask != 0)
+    #zero_mask = (band_mask != 1)
+
+    random_noise = np.random.uniform(0, 1, size = (224,224))
+
+    r = np.fft.fft2(random_noise)
+    random_shift = np.fft.fftshift(r)
+
+
+    bgr_img = cv2.cvtColor(np.float32(img), cv2.COLOR_RGB2BGR)
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+
+    f = np.fft.fft2(y)
+    f_shift = np.fft.fftshift(f)
+    magnitude_spectrum = np.log(np.abs(f_shift))
+
+    # Exchange masks in fourier domain
+    f_shift[mask] = random_shift[mask]
+    #f_shift[zero_mask] = 0
+
+    back_shift = np.fft.ifftshift(f_shift)
+    back_y = np.float32(np.fft.ifft2(back_shift).real)
+    img_merge = np.dstack([back_y, u, v])
+    bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+    img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+    img_back = np.clip(img_back, 0,1)
+
+    succcess = decision_function(model,img_back[None], params)[0]
+    while not succcess:
+        radius += 10
+        cv2.circle(band_mask, (112,112), radius, 0, -1)
+        zero_mask = (band_mask != 1)
+        f_shift[zero_mask] = 0
+        back_shift = np.fft.ifftshift(f_shift)
+        back_y = np.float32(np.fft.ifft2(back_shift).real)
+        img_merge = np.dstack([back_y, u, v])
+        bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+        img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+        img_back = np.clip(img_back, 0,1)
+        succcess = decision_function(model,img_back[None], params)[0]
+        print(radius)
+        if radius > 112:
+            break
+
+    return succcess
+
 
 
 def get_fourier_perturbation(img, model, params):
