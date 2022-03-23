@@ -10,7 +10,7 @@ import scipy.fftpack as fp
 import copy
 
 
-def check_fourier_pertubation(img, model, params):
+def create_fperturb_guarantee_minization(img, model, params):
     band_mask = np.ones((224,224))
     radius = 0
     cv2.circle(band_mask, (112,112), 112, 1, -1)
@@ -32,6 +32,8 @@ def check_fourier_pertubation(img, model, params):
     f = np.fft.fft2(y)
     f_shift = np.fft.fftshift(f)
     magnitude_spectrum = np.log(np.abs(f_shift))
+    #plt.imshow(magnitude_spectrum, cmap='gray')
+    #plt.show()
 
     # Exchange masks in fourier domain
     f_shift[mask] = random_shift[mask]
@@ -45,7 +47,47 @@ def check_fourier_pertubation(img, model, params):
     img_back = np.clip(img_back, 0,1)
 
     succcess = decision_function(model,img_back[None], params)[0]
+    if succcess:
+        # Try to minimize the perturbation
+        while succcess:
+            radius += 10
+            cv2.circle(band_mask, (112,112), radius, 0, -1)
+            mask = (band_mask != 0)
+            org_shift = np.fft.fftshift(f)
+            org_shift[mask] = random_shift[mask]
+
+            back_shift = np.fft.ifftshift(org_shift)
+            back_y = np.float32(np.fft.ifft2(back_shift).real)
+            img_merge = np.dstack([back_y, u, v])
+            bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+            img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+            img_back = np.clip(img_back, 0,1)
+            #plt.imshow(img_back)
+            #plt.title("Iteration")
+            #plt.show()
+            succcess = decision_function(model,img_back[None], params)[0]
+            if not succcess:
+                # Return the previous
+                radius -= 10
+                cv2.circle(band_mask, (112,112), radius, 0, -1)
+                mask = (band_mask != 0)
+                org_shift = np.fft.fftshift(f)
+                org_shift[mask] = random_shift[mask]
+
+                back_shift = np.fft.ifftshift(org_shift)
+                back_y = np.float32(np.fft.ifft2(back_shift).real)
+                img_merge = np.dstack([back_y, u, v])
+                bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+                img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+                img_back = np.clip(img_back, 0,1)
+                #plt.imshow(img_back)
+                #plt.title("Result")
+                #plt.show()
+                return img_back
+        
+
     while not succcess:
+        # Guranatee adversarial image
         radius += 10
         cv2.circle(band_mask, (112,112), radius, 0, -1)
         zero_mask = (band_mask != 1)
@@ -56,12 +98,15 @@ def check_fourier_pertubation(img, model, params):
         bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
         img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
         img_back = np.clip(img_back, 0,1)
+        plt.imshow(img_back)
+        plt.title("Worst-case..")
+        plt.show()
         succcess = decision_function(model,img_back[None], params)[0]
         print(radius)
         if radius > 112:
             break
 
-    return succcess
+    return img_back
 
 
 
