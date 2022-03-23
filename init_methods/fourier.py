@@ -177,7 +177,7 @@ def get_fourier_perturbation(img, model, params):
                 img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
                 img_back = np.clip(img_back, 0,1)
 
-    return img_back
+    return np.asarray([])
 
 
 def make_lut_u():

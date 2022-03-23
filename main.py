@@ -72,7 +72,8 @@ if __name__ == '__main__':
         eval_start[experiment] = []
         eval_end[experiment] = []
 
-    
+    best_exp = [0]*len(experiments)
+    non_adv_counter = 0
 
     #fig, axs = plt.subplots(len(experiments))
     
@@ -96,7 +97,7 @@ if __name__ == '__main__':
             start_eval_experiment(experiment)
 
             
-            print("\nExperiment {} \n".format(experiment))
+            #print("\nExperiment {} \n".format(experiment))
 
             # Running init_method based on experiment
             start_image = get_start_image(
@@ -104,18 +105,29 @@ if __name__ == '__main__':
                 sample=sample,
                 model=model,
                 params=params)
-            
 
-            # Conduct Binary Search
-            bs_img = binary_search(model, sample, start_image, params)
-            init_dist = compute_distance(bs_img, sample)
+            if start_image.shape[0] == 0:
+                print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
+                eval_start[experiment].append(np.Inf)
+                eval_end[experiment].append(np.Inf)
+                non_adv_counter += 1
+                continue
+
+            init_dist = compute_distance(start_image, sample)
+
             eval_start[experiment].append(init_dist)
-            print("Init ditance: ", init_dist)
-            add_dist_queries(init_dist)
+            
+            # Conduct Binary Search
+            boundary_img = binary_search(model, sample, start_image, params)
+            boundary_dist = compute_distance(boundary_img, sample)
+
+            eval_end[experiment].append(boundary_dist)
+            #print("Init ditance: ", init_dist)
+            #add_dist_queries(init_dist)
 
             # Run HSJA attack method
-            final_img = run_hsja(model, sample, bs_img)
-            eval_end[experiment].append(compute_distance(final_img, sample))
+            # final_img = run_hsja(model, sample, bs_img)
+            # eval_end[experiment].append(compute_distance(final_img, sample))
             
             # Saving computed images to folder /results
             #result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
@@ -130,7 +142,7 @@ if __name__ == '__main__':
             #plt.show()
 
         
-
+        """
         for exp in experiments:
             print("Image number {} / {}".format(i+1, CFG.NUM_IMAGES))
             print("Start mean for experiment {}: ".format(exp), np.median(eval_start[exp]))
@@ -138,8 +150,31 @@ if __name__ == '__main__':
             print("Start avg for experiment {}: ".format(exp), np.mean(eval_start[exp]))
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
             print("-------------------")
+        """
+
+        start_distances = []
+        end_distances = []
+        for k in eval_start:
+            start_distances.append(eval_start[k][-1])
+            end_distances.append(eval_end[k][-1])
+
+        print("Start distances:", start_distances)
+        print("End distances:", end_distances)
+
+        lowest = np.argmin(end_distances)
+        print("Best method:", experiments[lowest])
+        best_exp[lowest] += 1
+        print("Experiments:", experiments)
+        print("{}/{}:".format(str(i+1).rjust(len(str(CFG.NUM_IMAGES)), "0"), CFG.NUM_IMAGES), best_exp)
+        print("Number of non adversarial images:", non_adv_counter)
+        #for l, exp_num in enumerate(min_dists):
+        #    print("{}:\t{}".format(str(l).rjust(4, "0"), exp_num))
         
     #plot_all_experiments(experiments)
-    plot_median(experiments)
+    #plot_median(experiments)
+
+    print("Experiments:", experiments)
+    print("Best:", best_exp)
+    
 
         #fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
