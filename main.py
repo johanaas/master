@@ -14,7 +14,7 @@ from HSJA.hsja import hsja
 from matplotlib import pyplot as plt
 import query_counter
 from datetime import datetime
-from utils import binary_search, Logger, compute_distance
+from utils import binary_search, Logger, compute_distance, decision_function
 from imagenet_classes import class_names
 import sys
 
@@ -74,6 +74,7 @@ if __name__ == '__main__':
 
     best_exp = [0]*len(experiments)
     non_adv_counter = 0
+    throwaway_counter = 0
 
     #fig, axs = plt.subplots(len(experiments))
     
@@ -106,11 +107,14 @@ if __name__ == '__main__':
                 model=model,
                 params=params)
 
-            if start_image.shape[0] == 0:
+            #if start_image.shape[0] == 0:
+            #    print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
+            #    eval_start[experiment].append(np.Inf)
+            #    eval_end[experiment].append(np.Inf)
+            #    non_adv_counter += 1
+            #    continue
+            if not decision_function(model,start_image[None], params)[0]:
                 print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
-                eval_start[experiment].append(np.Inf)
-                eval_end[experiment].append(np.Inf)
-                non_adv_counter += 1
                 continue
 
             init_dist = compute_distance(start_image, sample)
@@ -151,7 +155,7 @@ if __name__ == '__main__':
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
             print("-------------------")
         """
-
+        
         start_distances = []
         end_distances = []
         for k in eval_start:
@@ -161,12 +165,18 @@ if __name__ == '__main__':
         print("Start distances:", start_distances)
         print("End distances:", end_distances)
 
+        if start_distances[0] < start_distances[1]:
+            print("Random started better than PAR, throwing away...")
+            throwaway_counter += 1
+            continue
+
         lowest = np.argmin(end_distances)
         print("Best method:", experiments[lowest])
         best_exp[lowest] += 1
         print("Experiments:", experiments)
         print("{}/{}:".format(str(i+1).rjust(len(str(CFG.NUM_IMAGES)), "0"), CFG.NUM_IMAGES), best_exp)
         print("Number of non adversarial images:", non_adv_counter)
+        print("Throwaways:", throwaway_counter)
         #for l, exp_num in enumerate(min_dists):
         #    print("{}:\t{}".format(str(l).rjust(4, "0"), exp_num))
         
