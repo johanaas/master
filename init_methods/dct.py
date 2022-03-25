@@ -13,9 +13,11 @@ def get_dct_image(orig_img, model, params, band_width=50, step_size=40, perturba
 
     coeffs_max = np.max(dct_coeffs)
 
-    epsilon = 0.01
+    epsilon = 0.1
 
-    for i in range(5):
+    last_perturbed = None
+
+    for i in range(15):
         thresh = coeffs_max * epsilon**i
         mask = (np.abs(dct_coeffs) < thresh)
 
@@ -24,16 +26,16 @@ def get_dct_image(orig_img, model, params, band_width=50, step_size=40, perturba
 
         perturbed_img = get_rgb_from_yuv([idct2(perturbed_coeffs), u, v])
 
-        fig, axs = plt.subplots(2, 1)
+        #fig, axs = plt.subplots(2, 1)
+        #axs[0].imshow(perturbed_img)
+        #axs[1].imshow(perturbed_coeffs)
+        #plt.show()
 
-        axs[0].imshow(perturbed_img)
-        axs[1].imshow(perturbed_coeffs)
-        plt.show()
-
-        if decision_function(model,perturbed_img[None], params)[0]:
-            return perturbed_img
+        if not decision_function(model,perturbed_img[None], params)[0]:
+            print("Used", i, "queries")
+            return last_perturbed
         
-        break
+        last_perturbed = perturbed_img
 
     print("\n\n\nImage is not adversarial. Throwing exception\n\n\n")
     raise ValueError("Could not create adversarial image")

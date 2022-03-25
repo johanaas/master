@@ -92,13 +92,19 @@ if __name__ == '__main__':
                 "shape": sample.shape
         }
 
+        init_imgs = {}
+        boundary_imgs = {}
+        for experiment in experiments:
+            init_imgs[experiment] = []
+            boundary_imgs[experiment] = []
+
         for j, experiment in enumerate(experiments):
             # Resetting query counter for each experiment
             query_counter.queries = 0
             start_eval_experiment(experiment)
 
             
-            #print("\nExperiment {} \n".format(experiment))
+            print("\nExperiment {} \n".format(experiment))
 
             # Running init_method based on experiment
             start_image = get_start_image(
@@ -106,6 +112,8 @@ if __name__ == '__main__':
                 sample=sample,
                 model=model,
                 params=params)
+
+            print("Max: {}\nMin: {}\n\n".format(np.max(start_image), np.min(start_image)))
 
             #if start_image.shape[0] == 0:
             #    print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
@@ -126,6 +134,19 @@ if __name__ == '__main__':
             boundary_dist = compute_distance(boundary_img, sample)
 
             eval_end[experiment].append(boundary_dist)
+
+            init_imgs[experiment].append(start_image)
+            boundary_imgs[experiment].append(boundary_img)
+
+            #fig, axs = plt.subplots(1, 3)
+            #axs[0].imshow(sample)
+            #axs[0].set_title("Original")
+            #axs[1].imshow(start_image)
+            #axs[1].set_title("Start")
+            #axs[2].imshow(boundary_img)
+            #axs[2].set_title("After BS")
+            #plt.show()
+
             #print("Init ditance: ", init_dist)
             #add_dist_queries(init_dist)
 
@@ -155,7 +176,7 @@ if __name__ == '__main__':
             print("End avg for experiment {}: ".format(exp), np.mean(eval_end[exp]))
             print("-------------------")
         """
-        
+
         start_distances = []
         end_distances = []
         for k in eval_start:
@@ -166,7 +187,14 @@ if __name__ == '__main__':
         print("End distances:", end_distances)
 
         if start_distances[0] < start_distances[1]:
-            print("Random started better than PAR, throwing away...")
+            print("Random started better than {}, throwing away...".format(experiments[1]))
+            fig, axs = plt.subplots(2, 2)
+            for l, e in enumerate(experiments):
+                axs[l, 0].imshow(init_imgs[e][-1])
+                axs[l, 0].set_title("{} init".format(e))
+                axs[l, 1].imshow(boundary_imgs[e][-1])
+                axs[l, 1].set_title("{} boundary".format(e))
+            plt.show()
             throwaway_counter += 1
             continue
 
