@@ -30,7 +30,7 @@ def get_dct_image(orig_img, model, params, band_width=50, step_size=40, perturba
         axs[1].imshow(perturbed_coeffs)
         plt.show()
 
-        if model.predict(perturbed_img): # TODO: change to actual model. True if adversarial
+        if decision_function(model,perturbed_img[None], params)[0]:
             return perturbed_img
         
         break

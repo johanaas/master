@@ -8,7 +8,7 @@ SEED = 69
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["random", "fourier"]
+EXPERIMENTS = ["dct"] #, "par", "fourier"]
 
 
 # Max number of model queries allowed. Attack breaks if
@@ -19,7 +19,7 @@ MAX_NUM_QUERIES = 6969
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 25000
+NUM_IMAGES = 5
 
 
 # The model to use
