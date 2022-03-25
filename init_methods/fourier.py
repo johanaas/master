@@ -9,15 +9,81 @@ import cv2
 import scipy.fftpack as fp
 import copy
 
+def get_mask(radius):
+    band_mask = np.ones((224,224))
+    if radius != 0:
+        cv2.circle(band_mask, (112,112), radius, 0, -1)
+    mask = (band_mask != 0)
+
+def get_y(img):
+    bgr_img = cv2.cvtColor(np.float32(img), cv2.COLOR_RGB2BGR)
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+    return y
+
+def get_ftrans(y):
+    f = np.fft.fft2(y)
+    return np.fft.fftshift(f)
+
+def get_iimg(org_img, shift):
+
+    bgr_img = cv2.cvtColor(np.float32(org_img), cv2.COLOR_RGB2BGR)
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+
+    back_shift = np.fft.ifftshift(shift)
+    back_y = np.float32(np.fft.ifft2(back_shift).real)
+    img_merge = np.dstack([back_y, u, v])
+    bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+    img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+    img_back = np.clip(img_back, 0,1)
+    return img_back
+
+def create_fperurb(img, model, params):
+    radius = 0
+    random_noise = np.random.uniform(0, 1, size = (224,224))
+    f_random = get_ftrans(get_y(random_noise))
+    init_mask = get_mask(radius)
+    f_img = get_ftrans(get_y(img))
+    f_img[init_mask] = f_random[init_mask]
+    naive_img = get_iimg(img, f_img)
+    print("Adversarial: ", decision_function(model,naive_img[None], params)[0] )
+    plt.imshow(naive_img)
+    plt.show()
+
+    if decision_function(model,naive_img[None], params)[0]:
+        # If img is adversarial, we'll try to get a 
+        while radius < 140:
+            f_adv_img = copy.deepcopy(get_ftrans(get_y(img)))
+            radius += 10
+            mask = get_mask(radius)
+            f_adv_img[mask] = random_noise[mask]
+            iimg = get_iimg(img, f_adv_img)
+            print("Adversarial: ", decision_function(model,iimg[None], params)[0] )
+            plt.imshow(iimg)
+            plt.show()
+            if not decision_function(model,iimg[None], params)[0]:
+                # Return last adversarial img
+                f_end_img = copy.deepcopy(f_img)
+                radius -= 10
+                mask = get_mask(radius)
+                f_end_img[mask] = random_noise[mask]
+                iend_img = get_iimg(img, f_end_img)
+                return iend_img
+    
+    return None
+
 
 def create_fperturb_guarantee_minization(img, model, params):
-    band_mask = np.ones((224,224))
+    #band_mask = np.ones((224,224))
     radius = 0
-    cv2.circle(band_mask, (112,112), 112, 1, -1)
+    #cv2.circle(band_mask, (112,112), 112, 1, -1)
     #cv2.circle(band_mask, (112,112), radius, 0, -1)
 
     mask = (band_mask != 0)
     #zero_mask = (band_mask != 1)
+
+    # Init mask covered entire image
 
     random_noise = np.random.uniform(0, 1, size = (224,224))
 
@@ -63,8 +129,10 @@ def create_fperturb_guarantee_minization(img, model, params):
             img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
             img_back = np.clip(img_back, 0,1)
             #plt.imshow(img_back)
-            #plt.title("Iteration")
-            #plt.show()
+            magnitude_spectrum = np.log(np.abs(org_shift))
+            plt.imshow(magnitude_spectrum, cmap='gray')
+            plt.title("Iteration: {}".format(radius))
+            plt.show()
             succcess = decision_function(model,img_back[None], params)[0]
             if not succcess:
                 # Return the previous
@@ -81,8 +149,10 @@ def create_fperturb_guarantee_minization(img, model, params):
                 img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
                 img_back = np.clip(img_back, 0,1)
                 #plt.imshow(img_back)
-                #plt.title("Result")
-                #plt.show()
+                magnitude_spectrum = np.log(np.abs(org_shift))
+                plt.imshow(magnitude_spectrum, cmap='gray')
+                plt.title("Result: adversarial: {}".format(decision_function(model,img_back[None], params)[0]))
+                plt.show()
                 return img_back
         
 
@@ -518,3 +588,230 @@ def fourier_transform_rgb(img, model, params):
     plt.show()
     """
     return img_back / 255
+
+
+def create_fperurb_rgb(img, model, params):
+    
+    transformed_channels = []
+    band_mask = np.ones((224,224))
+    cv2.circle(band_mask, (112,112), 56, 0, -1)
+    mask = (band_mask != 0)
+    for i in range(3):
+        rgb_fft = np.fft.fftshift(np.fft.fft2((img[:, :, i])))
+        print(rgb_fft)
+        random_noise = np.random.uniform(0, 1, size = (224,224))
+        magnitude = np.log(np.abs(rgb_fft))
+        magnitude[mask] = random_noise[mask]
+        plt.imshow(magnitude)
+        plt.show()
+        magnitude = np.exp(magnitude)
+        phase = np.angle(rgb_fft, deg=False)
+        b = magnitude*np.sin(phase)
+        a = magnitude*np.cos(phase)
+        print("a ", a )
+        print("b ", b )
+        z = a + b * 1j
+        back_shift = np.fft.ifftshift(z)
+        bb = np.fft.ifft2(back_shift).real
+        print("bb: ", bb)
+        #print(np.min(rgb_fft), np.max(rgb_fft))
+        #band_mask = np.ones((224,224))
+        #mask = (band_mask != 0)
+        #random_noise = np.random.uniform(0, 1, size = (224,224))
+        #rgb_fft[mask] = random_noise[mask]
+        #transformed_channels.append(abs(np.fft.ifft2(rgb_fft)))
+        transformed_channels.append(bb)
+    
+    final_image = np.dstack([transformed_channels[0].astype(float), 
+                             transformed_channels[1].astype(float), 
+                             transformed_channels[2].astype(float)])
+    
+    print("adversarial_ ", decision_function(model,final_image[None], params)[0])
+    plt.imshow(final_image)
+    plt.show()
+    return final_image
+
+def create_fperturb_guarantee_minization2(img, model, params):
+    band_mask = np.ones((224,224))
+    radius = 20
+    cv2.circle(band_mask, (112,112), 56, 0, -1)
+    #cv2.circle(band_mask, (112,112), radius, 0, -1)
+
+    mask = (band_mask != 0)
+    #zero_mask = (band_mask != 1)
+
+    random_noise = np.random.uniform(0, 1, size = (224,224))
+
+    r = np.fft.fft2(random_noise)
+    random_shift = np.fft.fftshift(r)
+
+
+    bgr_img = cv2.cvtColor(np.float32(img), cv2.COLOR_RGB2BGR)
+    img_yuv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+
+    #print(u, v)
+    #print(np.min(u), np.max(u))
+    #print(np.min(v), np.max(v))
+
+
+    f = np.fft.fft2(y)
+    f_shift = np.fft.fftshift(f)
+    print(f_shift)
+    magnitude_spectrum = np.log(np.abs(f_shift))
+    plt.imshow(magnitude_spectrum)
+    plt.show()
+
+    magnitude = np.log(np.abs(f_shift))
+    magnitude[mask] = random_noise[mask]
+    plt.imshow(magnitude)
+    plt.show()
+    magnitude = np.exp(magnitude)
+    print(np.min(magnitude), np.max(magnitude))
+    #magnitude = np.exp(np.random.uniform(0,1,magnitude.shape))
+    phase = np.angle(f_shift, deg=False)
+    print(phase)
+
+    b = magnitude*np.sin(phase)
+    a = magnitude*np.cos(phase)
+    print("ab ", a , b )
+
+    z = a + b * 1j #a * np.exp(1j*b)
+
+    print(z)
+
+    back_shift = np.fft.ifftshift(z)
+    bb = np.fft.ifft2(back_shift).real
+
+    print(bb)
+
+    img_merge = np.dstack([bb, u, v])
+    bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+    img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+
+    plt.imshow(img_back)
+    plt.show()
+
+    return img_back
+
+    #plt.imshow(magnitude_spectrum, cmap='gray')
+    #plt.show()
+
+    # Exchange masks in fourier domain
+    f_shift[mask] = random_noise[mask]#random_shift[mask]
+    #f_shift[zero_mask] = 0
+
+    back_shift = np.fft.ifftshift(f_shift)
+    back_y = np.float32(np.fft.ifft2(back_shift).real)
+    img_merge = np.dstack([back_y, u, v])
+    bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+    img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+    img_back = np.clip(img_back, 0,1)
+
+    succcess = decision_function(model,img_back[None], params)[0]
+    if succcess:
+        # Try to minimize the perturbation
+        #print(" Try to minimize the perturbation")
+        while succcess:
+            radius += 10
+            cv2.circle(band_mask, (112,112), radius, 0, -1)
+            mask = (band_mask != 0)
+            org_shift = np.fft.fftshift(f)
+            org_shift[mask] = random_noise[mask]
+
+            back_shift = np.fft.ifftshift(org_shift)
+            back_y = np.float32(np.fft.ifft2(back_shift).real)
+            img_merge = np.dstack([back_y, u, v])
+            bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+            img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+            print(np.min(img_back), np.max(img_back))
+            img_back = np.clip(img_back, 0,1)
+            #plt.imshow(img_back)
+            #plt.title("Iteration")
+            #plt.show()
+            succcess = decision_function(model,img_back[None], params)[0]
+            if not succcess:
+                # Return the previous
+                band_mask = np.ones((224,224))
+                radius -= 10
+                cv2.circle(band_mask, (112,112), radius, 0, -1)
+                mask = (band_mask != 0)
+                org_shift = np.fft.fftshift(f)
+                org_shift[mask] = random_noise[mask]
+
+                back_shift = np.fft.ifftshift(org_shift)
+                back_y = np.float32(np.fft.ifft2(back_shift).real)
+                img_merge = np.dstack([back_y, u, v])
+                bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+                img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+                img_back = np.clip(img_back, 0,1)
+                #plt.imshow(img_back)
+                #plt.title("Result: ")
+                #plt.show()
+                return img_back
+    
+    # Lets investigate the worst-cases
+    """
+    f_u = np.fft.fft2(u)
+    f_u_shift = np.fft.fftshift(f_u)
+    f_v = np.fft.fft2(v)
+    f_v_shift = np.fft.fftshift(f_v)
+    #magnitude_spectrum = np.log(np.abs(f_shift))
+    #plt.imshow(magnitude_spectrum, cmap='gray')
+    #plt.show()
+    #plt.imshow(u)
+    #plt.show()
+
+    u_random_noise = np.random.uniform(np.min(u), np.max(u), size = (224,224))
+    v_random_noise = np.random.uniform(np.min(v), np.max(v), size = (224,224))
+    # Exchange masks in fourier domain
+    f_u_shift[mask] = u_random_noise[mask]#random_shift[mask]
+    f_v_shift[mask] = v_random_noise[mask]#random_shift[mask]
+    #f_shift[zero_mask] = 0
+
+    back_u_shift = np.fft.ifftshift(f_u_shift)
+    back_u = np.float32(np.fft.ifft2(back_u_shift).real)
+    back_v_shift = np.fft.ifftshift(f_v_shift)
+    back_v = np.float32(np.fft.ifft2(back_v_shift).real)
+
+    print(back_y, back_u, back_v)
+
+    img_merge = np.dstack([back_y, back_u, back_v])
+    bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+    img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+    img_back = np.clip(img_back, 0,1)
+    plt.imshow(img_back)
+    plt.show()
+
+    print("u adv: ", decision_function(model,img_back[None], params)[0])
+    """
+    plt.imshow(img_back)
+    plt.show()
+    radius = 0
+    while not succcess:
+        # Guranatee adversarial image
+        band_mask = np.ones((224,224))
+        f = np.fft.fft2(y)
+        f_shift = np.fft.fftshift(f)
+        print("Hard image..")
+        radius += 10
+        #cv2.circle(band_mask, (112,112), radius, 0, -1)
+        hard_random_noise = np.random.uniform(0, 1, size = (224,224))
+        zero_mask = (band_mask != 0)
+        f_shift[zero_mask] = hard_random_noise[zero_mask]
+        back_shift = np.fft.ifftshift(f_shift)
+        back_y = np.float32(np.fft.ifft2(back_shift).real)
+        img_merge = np.dstack([back_y, u, v])
+        bgr_img_back = cv2.cvtColor(np.float32(img_merge), cv2.COLOR_YUV2BGR)
+        img_back = cv2.cvtColor(np.float32(bgr_img_back), cv2.COLOR_BGR2RGB)
+        print(np.min(img_back), np.max(img_back))
+        img_back = np.clip(img_back, 0,1)
+        plt.imshow(img_back)
+        plt.title("Worst-case..")
+        plt.show()
+        succcess = decision_function(model,img_back[None], params)[0]
+        print(radius)
+        if radius > 112:
+            break
+
+    return img_back
