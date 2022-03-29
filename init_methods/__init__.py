@@ -1,7 +1,7 @@
 from .random import get_random_noise
 from .par import get_par_patches
 from .dct import get_dct_image
-from .fourier import create_fperturb_guarantee_minization2, create_fperurb_rgb
+from .fourier import create_fperturb_guarantee_minization2, create_fperurb_rgb, create_fperturb_binary_seach, create_fperturb_binary_seach_in_different_freq
 
 def get_start_image(
   experiment=None,
@@ -14,7 +14,7 @@ def get_start_image(
   elif experiment == "par":
     return get_par_patches(sample, model, params)
   elif experiment == "fourier":
-    return create_fperurb_rgb(sample, model, params)
+    return create_fperturb_binary_seach_in_different_freq(sample, model, params)
   elif experiment == "dct":
     return get_dct_image(sample, model, params)
   else:

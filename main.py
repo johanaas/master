@@ -92,6 +92,8 @@ if __name__ == '__main__':
                 "shape": sample.shape
         }
 
+        random_boundary_dist = 0
+
         for j, experiment in enumerate(experiments):
             # Resetting query counter for each experiment
             query_counter.queries = 0
@@ -117,21 +119,34 @@ if __name__ == '__main__':
                 print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
                 continue
 
-            init_dist = compute_distance(start_image, sample)
+            #init_dist = compute_distance(start_image, sample)
 
-            eval_start[experiment].append(init_dist)
+            #eval_start[experiment].append(init_dist)
             
             # Conduct Binary Search
             boundary_img = binary_search(model, sample, start_image, params)
             boundary_dist = compute_distance(boundary_img, sample)
 
-            eval_end[experiment].append(boundary_dist)
+            bs_dist = compute_distance(boundary_img, sample)
+            eval_start[experiment].append(bs_dist)
+
+            if experiment == "random":
+                random_boundary_dist = boundary_dist
+            else:
+                #print("Random at {} vs Fourier at {}".format(random_boundary_dist, boundary_dist))
+                if boundary_dist > random_boundary_dist:
+                    # Fourier have higher L2
+                    # We dont do HSJA
+                    #print("\n\n\nFourier have higher L2: Skipping HSJA\n\n\n")
+
+                    continue
+            #eval_end[experiment].append(boundary_dist)
             #print("Init ditance: ", init_dist)
             #add_dist_queries(init_dist)
 
             # Run HSJA attack method
-            # final_img = run_hsja(model, sample, bs_img)
-            # eval_end[experiment].append(compute_distance(final_img, sample))
+            final_img = run_hsja(model, sample, boundary_img)
+            eval_end[experiment].append(compute_distance(final_img, sample))
             
             # Saving computed images to folder /results
             #result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)

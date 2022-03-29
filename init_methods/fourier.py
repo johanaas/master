@@ -4,10 +4,11 @@ from skimage.io import imread, imshow
 from skimage.color import rgb2hsv, rgb2gray, rgb2yuv
 from skimage import color, exposure, transform
 from skimage.exposure import equalize_hist
-from utils import decision_function
+from utils import decision_function, compute_distance
 import cv2
 import scipy.fftpack as fp
 import copy
+import jenkspy
 
 def get_mask(radius):
     band_mask = np.ones((224,224))
@@ -589,31 +590,183 @@ def fourier_transform_rgb(img, model, params):
     """
     return img_back / 255
 
+def create_fperturb_binary_seach_in_different_freq(img, model, params):
+    
+    perturbed = create_fperurb_rgb(img, model, params)
+
+    band_mask = np.ones((224,224))
+    cv2.circle(band_mask, (112,112), 25, 0, -1)
+    #plt.imshow(band_mask)
+    #plt.show()
+    low_mask = (band_mask == 0)
+
+    band_mask = np.ones((224,224))
+    cv2.circle(band_mask, (112,112), 75, 0, -1)
+    cv2.circle(band_mask, (112,112), 25, 1, -1)
+    #plt.imshow(band_mask)
+    #plt.show()
+    med_mask = (band_mask == 0)
+
+    band_mask = np.ones((224,224))
+    cv2.circle(band_mask, (112,112), 75, 0, -1)
+    #plt.imshow(band_mask)
+    #plt.show()
+    high_mask = (band_mask == 1)
+
+
+
+    final_image1 = create_fperturb_binary_seach(low_mask, perturbed, img, model, params)
+    #print("L2: ", compute_distance(final_image1, img))
+    #plt.imshow(final_image1)
+    #plt.show()
+    final_image2 = create_fperturb_binary_seach(med_mask, final_image1, img, model, params)
+    #print("L2: ", compute_distance(final_image2, img))
+    #plt.imshow(final_image2)
+    #plt.show()
+    final_image3 = create_fperturb_binary_seach(high_mask, final_image2, img, model, params)
+    
+    #print("L2: ", compute_distance(final_image3, img))
+    #plt.imshow(final_image3)
+    #plt.show()
+
+    return final_image3
+
+def create_fperturb_binary_seach(mask, perturbed, img, model, params):
+    
+    #plt.imshow(perturbed)
+    #plt.show()
+    
+
+    low = 0.0
+    high = 1.0
+    while high - low > 0.001:
+        mid = (high + low) / 2.0
+
+        transformed_channels = []
+
+        for i in range(3):
+            rgb_fft = np.fft.fftshift(np.fft.fft2((perturbed[:, :, i])))
+            magnitude = np.abs(rgb_fft)
+            
+
+            org_fft = np.fft.fftshift(np.fft.fft2((img[:, :, i])))
+            #org_magnitude = np.log(np.abs(rgb_fft))
+            org_magnitude = np.abs(org_fft)
+            blended = copy.deepcopy(magnitude)
+            # Run binary search in freq domain
+            blended[mask] = (1 - mid) * org_magnitude[mask] + mid * magnitude[mask]
+
+            #plt.imshow(np.log(blended))
+            #plt.show()
+            # Convert back
+            #blended = np.exp(blended)
+            phase = np.angle(rgb_fft, deg=False)
+            b = blended*np.sin(phase)
+            a = blended*np.cos(phase)
+
+            z = a + b * 1j
+            back_shift = np.fft.ifftshift(z)
+            bb = np.fft.ifft2(back_shift).real
+
+            transformed_channels.append(bb)
+
+        final_image = np.dstack([transformed_channels[0].astype(float), 
+                                transformed_channels[1].astype(float), 
+                                transformed_channels[2].astype(float)])
+
+        success = decision_function(model, final_image[None], params)
+        #print("BINARY SUCCESS: ", success)
+        #print("L2: ", compute_distance(final_image, img))
+        #print(high - low)
+        #plt.imshow(final_image)
+        #plt.show()
+
+        if success:
+            high = mid
+        else:
+            low = mid
+
+    transformed_channels = []
+
+    for i in range(3):
+            rgb_fft = np.fft.fftshift(np.fft.fft2((perturbed[:, :, i])))
+            magnitude = np.abs(rgb_fft)
+
+            org_fft = np.fft.fftshift(np.fft.fft2((img[:, :, i])))
+            #org_magnitude = np.log(np.abs(rgb_fft))
+            org_magnitude = np.abs(org_fft)
+            blended = copy.deepcopy(magnitude)
+            # Run binary search in freq domain
+            #blended = (1 - mid) * org_magnitude + mid * rgb_fft
+            blended[mask] = (1 - high) * org_magnitude[mask] + high * magnitude[mask]
+            # Convert back
+            #blended = np.exp(blended)
+            phase = np.angle(rgb_fft, deg=False)
+            b = blended*np.sin(phase)
+            a = blended*np.cos(phase)
+
+            z = a + b * 1j
+            back_shift = np.fft.ifftshift(z)
+            bb = np.fft.ifft2(back_shift).real
+
+            transformed_channels.append(bb)
+
+    
+    final_image = np.dstack([transformed_channels[0].astype(float), 
+                                transformed_channels[1].astype(float), 
+                                transformed_channels[2].astype(float)])
+    #plt.imshow(final_image)
+    #plt.show()
+    #print("final L2: ", compute_distance(final_image, img))
+    return final_image
 
 def create_fperurb_rgb(img, model, params):
     
+    #jnb = jenkspy.JenksNaturalBreaks()
+
     transformed_channels = []
     band_mask = np.ones((224,224))
     cv2.circle(band_mask, (112,112), 56, 0, -1)
     mask = (band_mask != 0)
     for i in range(3):
         rgb_fft = np.fft.fftshift(np.fft.fft2((img[:, :, i])))
-        print(rgb_fft)
+        #print(rgb_fft)
+        
         random_noise = np.random.uniform(0, 1, size = (224,224))
         magnitude = np.log(np.abs(rgb_fft))
-        magnitude[mask] = random_noise[mask]
-        plt.imshow(magnitude)
-        plt.show()
+        
+        """
+        # Get groups of frequency
+        flatten_img = magnitude.flatten()
+        try:
+            #jnb.fit(flatten_img)
+            jnb_groups = jenkspy.jenks_breaks(flatten_img, nb_class=3) #jnb.groups()
+            print(jnb_groups)
+            #for gr in jnb_groups:
+            #    print("Jenks: ", np.min(gr), np.max(gr))
+        except:
+            pass
+        """
+        high_mask = (magnitude < 1)
+        med_mask = (magnitude > 2) | (magnitude < 4)
+        low_mask = (magnitude > 5)
+
+        #magnitude[mask] = random_noise[mask]
+        magnitude[high_mask] = np.random.uniform(0, 1, size = (224,224))[high_mask]
+        magnitude[med_mask] = np.random.uniform(2, 4, size = (224,224))[med_mask]
+        magnitude[low_mask] = np.random.uniform(5, 9, size = (224,224))[low_mask]
+        #plt.imshow(magnitude)
+        #plt.show()
         magnitude = np.exp(magnitude)
         phase = np.angle(rgb_fft, deg=False)
         b = magnitude*np.sin(phase)
         a = magnitude*np.cos(phase)
-        print("a ", a )
-        print("b ", b )
+        #print("a ", a )
+        #print("b ", b )
         z = a + b * 1j
         back_shift = np.fft.ifftshift(z)
         bb = np.fft.ifft2(back_shift).real
-        print("bb: ", bb)
+        #print("bb: ", bb)
         #print(np.min(rgb_fft), np.max(rgb_fft))
         #band_mask = np.ones((224,224))
         #mask = (band_mask != 0)
@@ -626,9 +779,13 @@ def create_fperurb_rgb(img, model, params):
                              transformed_channels[1].astype(float), 
                              transformed_channels[2].astype(float)])
     
-    print("adversarial_ ", decision_function(model,final_image[None], params)[0])
-    plt.imshow(final_image)
-    plt.show()
+    #print(np.min(final_image), np.max(final_image))
+    final_image += np.abs(np.min(final_image))
+    final_image = final_image / np.max(final_image)
+    #print(np.min(final_image), np.max(final_image))
+    print("adversarial: ", decision_function(model,final_image[None], params)[0])
+    #plt.imshow(final_image)
+    #plt.show()
     return final_image
 
 def create_fperturb_guarantee_minization2(img, model, params):
