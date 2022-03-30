@@ -96,17 +96,18 @@ if __name__ == '__main__':
             #    class_names[np.argmax(model.predict(final_img))]))
             # plt.show()
 
-        if CFG.PRINT_ITERATION_STATUS:
+        if CFG.PRINT_ITERATION_MEDIANS_AND_MEANS:
             print_current_medians_and_averages(experiments, eval_start, eval_end)
         
-        start_distances = []
-        end_distances = []
-        for k in eval_start:
-            start_distances.append(eval_start[k][-1])
-            end_distances.append(eval_end[k][-1])
-        best_exp[np.argmin(end_distances)] += 1
+        if CFG.PRINT_ITERATION_SUMMARY:
+            start_distances = []
+            end_distances = []
+            for k in experiments:
+                start_distances.append(eval_start[k][-1])
+                end_distances.append(eval_end[k][-1])
+            best_exp[np.argmin(end_distances)] += 1
 
-        print_iteration_summary(experiments, start_distances, end_distances, best_exp)
+            print_iteration_summary(experiments, start_distances, end_distances, best_exp)
 
     #plot_all_experiments(experiments)
     #plot_median(experiments)

@@ -8,12 +8,12 @@ SEED = 69
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["fpar", "random"]
+EXPERIMENTS = ["random"]
 
 
 # List of experiments that use HSJA. Name have to match the
 # names in EXPERIMENTS
-USE_HSJA = []
+USE_HSJA = ["random"]
 
 
 # Max number of model queries allowed. Attack breaks if
@@ -50,4 +50,8 @@ LOG_DIR = None #"logs"
 RUN_EVAL = True
 
 # Print median and average distances for each iteration
-PRINT_ITERATION_STATUS = False
+PRINT_ITERATION_MEDIANS_AND_MEANS = False
+
+# Print start and end distances for each experiment in
+# each iteration
+PRINT_ITERATION_SUMMARY = True
