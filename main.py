@@ -75,6 +75,7 @@ if __name__ == '__main__':
     best_exp = [0]*len(experiments)
     non_adv_counter = 0
     throwaway_counter = 0
+    fpar_sum_queries = 0
 
     #fig, axs = plt.subplots(len(experiments))
     
@@ -119,17 +120,25 @@ if __name__ == '__main__':
                 print("\n\n\nImage {} from {} not adversarial!\n\n\n".format(j, experiment))
                 continue
 
-            #init_dist = compute_distance(start_image, sample)
+            init_dist = compute_distance(start_image, sample)
 
-            #eval_start[experiment].append(init_dist)
+            eval_start[experiment].append(init_dist)
+
             
             # Conduct Binary Search
             boundary_img = binary_search(model, sample, start_image, params)
             boundary_dist = compute_distance(boundary_img, sample)
 
             bs_dist = compute_distance(boundary_img, sample)
-            eval_start[experiment].append(bs_dist)
+            eval_end[experiment].append(bs_dist)
 
+            if experiment == "fpar":
+                query_counter.max_queries = query_counter.queries
+                fpar_sum_queries += query_counter.queries
+
+            print("Queries used: {} -> {}".format(experiment, query_counter.queries))
+
+            """
             if experiment == "random":
                 random_boundary_dist = boundary_dist
             else:
@@ -143,11 +152,14 @@ if __name__ == '__main__':
             #eval_end[experiment].append(boundary_dist)
             #print("Init ditance: ", init_dist)
             #add_dist_queries(init_dist)
+            """
 
-            # Run HSJA attack method
-            final_img = run_hsja(model, sample, boundary_img)
-            eval_end[experiment].append(compute_distance(final_img, sample))
+            if experiment == "random":
+                # Run HSJA attack method
+                final_img = run_hsja(model, sample, boundary_img)
+                eval_end[experiment].append(compute_distance(final_img, sample))
             
+
             # Saving computed images to folder /results
             #result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
             #axs[j].imshow(result_image)
@@ -180,10 +192,12 @@ if __name__ == '__main__':
         print("Start distances:", start_distances)
         print("End distances:", end_distances)
 
-        if start_distances[0] < start_distances[1]:
+        """
+        if start_distances[0] == np.max(start_distances) start_distances[1]:
             print("Random started better than PAR, throwing away...")
             throwaway_counter += 1
             continue
+        """
 
         lowest = np.argmin(end_distances)
         print("Best method:", experiments[lowest])
@@ -191,7 +205,8 @@ if __name__ == '__main__':
         print("Experiments:", experiments)
         print("{}/{}:".format(str(i+1).rjust(len(str(CFG.NUM_IMAGES)), "0"), CFG.NUM_IMAGES), best_exp)
         print("Number of non adversarial images:", non_adv_counter)
-        print("Throwaways:", throwaway_counter)
+        print("Fpar mean queries:", fpar_sum_queries / (i+1))
+        #print("Throwaways:", throwaway_counter)
         #for l, exp_num in enumerate(min_dists):
         #    print("{}:\t{}".format(str(l).rjust(4, "0"), exp_num))
         

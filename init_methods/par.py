@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import cv2
 import numpy as np
 from utils import decision_function
+import query_counter
 
 #############################################################################
 #                                                                           #
@@ -11,7 +12,7 @@ from utils import decision_function
 #                                                                           #
 #############################################################################
 
-def get_par_patches(img, model, params, plot_each_step=False):
+def get_par_patches(img, model, params, noise=[], plot_each_step=False):
     """Returns random noise on important patches identified
     through querying the model. The returned image is between
     [0, 1] and is the noise overlayed on the original image
@@ -28,13 +29,17 @@ def get_par_patches(img, model, params, plot_each_step=False):
     assert img.shape[0] == img.shape[1]
     img_width = img.shape[0]
     np.random.seed(69)
-    random_noise = np.random.uniform(0, 1, (img.shape))
+
+    if len(noise) != 0:
+        noise = noise
+    else:
+        noise = np.random.uniform(0, 1, (img.shape))
 
     saved_patches = [(0, 0, img_width)]
 
     i = 0
 
-    new_noise = random_noise
+    new_noise = noise
     while len(saved_patches) > 0:
         saved_patch = saved_patches.pop(0)
         new_patches, new_noise = remove_noise(img, new_noise, saved_patch, model, params, plot_each_step=plot_each_step)
