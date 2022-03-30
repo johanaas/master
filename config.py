@@ -11,6 +11,11 @@ SEED = 69
 EXPERIMENTS = ["fpar", "random"]
 
 
+# List of experiments that use HSJA. Name have to match the
+# names in EXPERIMENTS
+USE_HSJA = []
+
+
 # Max number of model queries allowed. Attack breaks if
 # this value is exceeded
 MAX_NUM_QUERIES = 2500
