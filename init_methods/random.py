@@ -1,11 +1,10 @@
-from utils.misc_utils import decision_function
+from utils.decision_function import decision_function
 import numpy as np
 from matplotlib import pyplot as plt
 import copy
 import query_counter
 
 def get_random_noise(model, params):
-    np.random.seed(69)
     num_evals = 0
     success = 0
     while True:

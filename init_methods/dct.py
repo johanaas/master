@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.fftpack import dct, idct
 import cv2
-from utils.misc_utils import decision_function
+from utils.decision_function import decision_function
 
 def get_dct_image(orig_img, model, params, band_width=50, step_size=40, perturbation_factor=1):
 

@@ -5,39 +5,17 @@ import random
 np.random.seed(CFG.SEED)
 random.seed(CFG.SEED)
 
+import query_counter
 from init_methods import get_start_image
 from models import get_model
 from datasets import get_dataset
 from evaluation import start_eval_experiment, init_plotting, add_dist_queries, plot_all_experiments, plot_median
 
-from HSJA.hsja import hsja
-import query_counter
-from utils.misc_utils import binary_search, compute_distance
+from utils.run_hsja import run_hsja
+from utils.binary_search import binary_search
+from utils.compute_distance import compute_distance
 from utils.logging import setup_logging
 from utils.printing import print_current_medians_and_averages, print_sample_progress, print_iteration_summary
-
-def run_hsja(model, samples, sample_perturbed):
-
-
-    target_label = None
-    target_image = None
-
-    #print('attacking the {}th sample...'.format(i))
-
-    perturbed = hsja(model, 
-                        sample,
-                        sample_perturbed,
-                        clip_max = 1, 
-                        clip_min = 0, 
-                        constraint = "l2", 
-                        num_iterations = 25, 
-                        gamma = 1.0, 
-                        target_label = None, 
-                        target_image = None, 
-                        stepsize_search = "geometric_progression", 
-                        max_num_evals = 1e4,
-                        init_num_evals = 100)
-    return perturbed
 
 if __name__ == '__main__':
     

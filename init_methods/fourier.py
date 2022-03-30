@@ -4,7 +4,8 @@ from skimage.io import imread, imshow
 from skimage.color import rgb2hsv, rgb2gray, rgb2yuv
 from skimage import color, exposure, transform
 from skimage.exposure import equalize_hist
-from utils.misc_utils import decision_function, compute_distance
+from utils.decision_function import decision_function
+from utils.compute_distance import compute_distance
 import cv2
 import scipy.fftpack as fp
 import copy

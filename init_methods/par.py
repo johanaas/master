@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import cv2
 import numpy as np
-from utils.misc_utils import decision_function
+from utils.decision_function import decision_function
 import query_counter
 
 #############################################################################
