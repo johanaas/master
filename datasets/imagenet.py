@@ -7,7 +7,6 @@ import config as CFG
 
 def load_imagenet(num_images):
     path = CFG.IMAGENET_PATH
-    random.seed(69)
     random_filenames = random.sample([
         x for x in os.listdir(path)
         if os.path.isfile(os.path.join(path, x))
