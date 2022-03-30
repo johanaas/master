@@ -18,13 +18,13 @@ USE_HSJA = []
 
 # Max number of model queries allowed. Attack breaks if
 # this value is exceeded
-MAX_NUM_QUERIES = 2500
+MAX_NUM_QUERIES = 123
 
 
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 750
+NUM_IMAGES = 5
 
 
 # The model to use
@@ -43,8 +43,11 @@ IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
 # If not None all print statements are written to a logfile
 # The directory has to be manually created, and the logfile
 # is automatically created inside the directory
-LOG_DIR = "logs"
+LOG_DIR = None #"logs"
 
 
 # Collect distance and queries in order to plot graphs
 RUN_EVAL = True
+
+# Print median and average distances for each iteration
+PRINT_ITERATION_STATUS = False
