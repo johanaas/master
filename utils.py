@@ -1,21 +1,6 @@
 import numpy as np
 import copy
-
-class Logger(object):
-    def __init__(self, *files):
-        self.files = files
-
-    def write(self, obj):
-        for f in self.files:
-            if isinstance(f, str):
-                file = open(f, 'a')
-                file.write(obj)
-                file.close()
-            else:
-                f.write(obj)
-
-    def flush(self):
-        pass
+from HSJA.hsja import hsja
 
 def compute_distance(x_ori, x_pert, constraint = 'l2'):
 	# Compute the distance between two images.

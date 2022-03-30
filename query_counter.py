@@ -9,3 +9,7 @@ def init_queries():
     eval_exp = {}
     global active_exp
     active_exp = ""
+
+def reset_queries():
+    global queries
+    queries = 0
