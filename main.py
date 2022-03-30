@@ -14,7 +14,7 @@ from HSJA.hsja import hsja
 import query_counter
 from utils.misc_utils import binary_search, compute_distance
 from utils.logging import setup_logging
-from utils.printing import print_current_medians_and_averages, print_sample_progress
+from utils.printing import print_current_medians_and_averages, print_sample_progress, print_iteration_summary
 
 def run_hsja(model, samples, sample_perturbed):
 
@@ -118,28 +118,18 @@ if __name__ == '__main__':
             #    class_names[np.argmax(model.predict(final_img))]))
             # plt.show()
 
-        print_current_medians_and_averages(experiments, eval_start, eval_end)
+        if CFG.PRINT_ITERATION_STATUS:
+            print_current_medians_and_averages(experiments, eval_start, eval_end)
         
         start_distances = []
         end_distances = []
         for k in eval_start:
             start_distances.append(eval_start[k][-1])
             end_distances.append(eval_end[k][-1])
-
-        print("Start distances:", start_distances)
-        print("End distances:", end_distances)
-
         best_exp[np.argmin(end_distances)] += 1
 
-        print("Experiments:", experiments)
-        print("{}/{}:".format(str(i+1).rjust(len(str(CFG.NUM_IMAGES)), "0"), CFG.NUM_IMAGES), best_exp)
+        print_iteration_summary(experiments, start_distances, end_distances, best_exp)
 
-        
     #plot_all_experiments(experiments)
     #plot_median(experiments)
-
-    print("Experiments:", experiments)
-    print("Best:", best_exp)
-    
-
-        #fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    #fig.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))

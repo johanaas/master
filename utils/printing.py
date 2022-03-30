@@ -21,3 +21,9 @@ def print_current_medians_and_averages(experiments, starts, ends, width=40):
         
     print("-"*width)
     print()
+
+def print_iteration_summary(experiments, starts, ends, best, width=20):
+    print("Experiments".ljust(width), ":", experiments)
+    print("Start distances".ljust(width), ":", starts)
+    print("End distances".ljust(width), ":", ends)
+    print("Best counter".ljust(width), ":", best)
