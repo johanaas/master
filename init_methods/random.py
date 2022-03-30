@@ -5,7 +5,6 @@ import copy
 import query_counter
 
 def get_random_noise(model, params):
-    np.random.seed(69)
     num_evals = 0
     success = 0
     while True:

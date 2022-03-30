@@ -10,7 +10,7 @@ def get_start_image(
   model=None,
   params=None):
 
-  if experiment == "random":
+  if "random" in experiment:
     return get_random_noise(model, params)
   elif experiment == "par":
     return get_par_patches(sample, model, params)

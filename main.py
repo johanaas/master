@@ -154,11 +154,12 @@ if __name__ == '__main__':
             #add_dist_queries(init_dist)
             """
 
+            """
             if experiment == "random":
                 # Run HSJA attack method
                 final_img = run_hsja(model, sample, boundary_img)
                 eval_end[experiment].append(compute_distance(final_img, sample))
-            
+            """
 
             # Saving computed images to folder /results
             #result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
