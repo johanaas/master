@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import query_counter
 from evaluation import add_dist_queries
-from utils import decision_function, clip_image, compute_distance
+from utils.misc_utils import decision_function, clip_image, compute_distance
 
 def hsja(model, 
 	sample,
