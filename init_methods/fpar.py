@@ -2,7 +2,7 @@ from .fourier import create_fperturb_binary_seach_in_different_freq
 from .par import get_par_patches
 
 import numpy as np
-from utils import clip_image, compute_distance
+from utils.misc_utils import clip_image, compute_distance
 
 from matplotlib import pyplot as plt
 

@@ -1,6 +1,5 @@
 import numpy as np
 import copy
-from HSJA.hsja import hsja
 
 def compute_distance(x_ori, x_pert, constraint = 'l2'):
 	# Compute the distance between two images.

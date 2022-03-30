@@ -12,7 +12,7 @@ from evaluation import start_eval_experiment, init_plotting, add_dist_queries, p
 
 from HSJA.hsja import hsja
 import query_counter
-from utils import binary_search, compute_distance
+from utils.misc_utils import binary_search, compute_distance
 from utils.logging import setup_logging
 from utils.printing import print_current_medians_and_averages, print_sample_progress
 
@@ -65,7 +65,10 @@ if __name__ == '__main__':
 
     for i, sample in enumerate(data):
 
-        print_sample_progress(iter=i+1, max_iter=CFG.NUM_IMAGES, show_time=True)
+        print_sample_progress(
+            current_iteration=i+1,
+            max_iteration=CFG.NUM_IMAGES,
+            show_time=True)
 
         original_label = np.argmax(model.predict(sample))
 
@@ -115,7 +118,7 @@ if __name__ == '__main__':
             #    class_names[np.argmax(model.predict(final_img))]))
             # plt.show()
 
-        print_current_medians_and_averages(experiment, eval_start, eval_end)
+        print_current_medians_and_averages(experiments, eval_start, eval_end)
         
         start_distances = []
         end_distances = []
