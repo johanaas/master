@@ -46,7 +46,6 @@ def construct_model_and_data(args):
 		label_test = np.argmax(y_test, axis = 1)
 		x_train_by_class = [x_train[label_train == i] for i in range(model.num_classes)]
 		target_img_by_class = np.array([x_train_by_class[i][0] for i in range(model.num_classes)])
-		np.random.seed(0)
 		target_labels = [np.random.choice([j for j in range(model.num_classes) if j != label]) for label in label_test]
 		target_img_ids = [np.random.choice(len(x_train_by_class[target_label])) for target_label in target_labels]
 		target_images = [x_train_by_class[target_labels[j]][target_img_id] for j, target_img_id in enumerate(target_img_ids)]
