@@ -33,9 +33,7 @@ def create_fperturb_binary_seach_in_different_freq(img, model, params):
 
 
     final_image1 = create_fperturb_binary_seach(low_mask, perturbed, img, model, params)
-
     final_image2 = create_fperturb_binary_seach(med_mask, final_image1, img, model, params)
-
     final_image3 = create_fperturb_binary_seach(high_mask, final_image2, img, model, params)
 
     return final_image3
