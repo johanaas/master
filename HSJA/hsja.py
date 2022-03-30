@@ -2,7 +2,9 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import query_counter
 from evaluation import add_dist_queries
-from utils.misc_utils import decision_function, clip_image, compute_distance
+from utils.decision_function import decision_function
+from utils.clip_image import clip_image
+from utils.compute_distance import compute_distance
 
 def hsja(model, 
 	sample,
@@ -55,7 +57,6 @@ def hsja(model,
 	perturbed image.
 	
 	"""
-	np.random.seed(69)
 	# Set parameters
 	original_label = np.argmax(model.predict(sample))
 	params = {'clip_max': clip_max, 'clip_min': clip_min, 
