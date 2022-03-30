@@ -8,8 +8,6 @@ def print_sample_progress(current_iteration, max_iteration, show_time=False):
     if show_time:
         print("Time: ", datetime.now())
 
-    print("\n\n")
-
 def print_current_medians_and_averages(experiments, starts, ends, width=40):
 
     print("Current status".center(width, "-"))
@@ -20,7 +18,6 @@ def print_current_medians_and_averages(experiments, starts, ends, width=40):
         print()
         
     print("-"*width)
-    print()
 
 def print_iteration_summary(experiments, starts, ends, best, width=20):
     print("Experiments".ljust(width), ":", experiments)

@@ -62,7 +62,6 @@ if __name__ == '__main__':
 
         for j, experiment in enumerate(experiments):
 
-            # Reset query counter for each experiment
             query_counter.reset_queries()
             start_eval_experiment(experiment)
 
