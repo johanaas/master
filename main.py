@@ -17,6 +17,9 @@ from utils.compute_distance import compute_distance
 from utils.logging import setup_logging
 from utils.printing import print_current_medians_and_averages, print_sample_progress, print_iteration_summary
 
+from matplotlib import pyplot as plt
+from utils.decision_function import decision_function
+
 if __name__ == '__main__':
     
     if CFG.LOG_DIR is not None:
@@ -41,6 +44,10 @@ if __name__ == '__main__':
 
     best_exp = [0]*len(experiments)
 
+    fpar_max_queries = 0
+    fpar_total_queries = 0
+    random_total_queries = 0
+
     for i, sample in enumerate(data):
 
         print_sample_progress(
@@ -58,18 +65,41 @@ if __name__ == '__main__':
                 "shape": sample.shape
         }
 
-        random_boundary_dist = 0
 
         for j, experiment in enumerate(experiments):
 
             query_counter.reset_queries()
             start_eval_experiment(experiment)
 
+            """
+            plt.imshow(sample)
+            plt.title("Original image")
+            plt.show()
+            """
+
             start_image = get_start_image(
                 experiment=experiment,
                 sample=sample,
                 model=model,
                 params=params)
+            
+            """
+            success = decision_function(model, start_image[None], params)
+            print("Is adversarial?", success)
+
+            difference = np.abs(start_image - sample)
+            print("Max difference:", np.max(difference))
+            difference /= np.max(difference)
+
+
+            plt.imshow(difference)
+            plt.title("Scaled noise")
+            plt.show()
+
+            plt.imshow(start_image)
+            plt.title("Adversarial image")
+            plt.show()
+            """
 
             init_dist = compute_distance(start_image, sample)
 
@@ -79,9 +109,20 @@ if __name__ == '__main__':
             eval_start[experiment].append(init_dist)
             eval_end[experiment].append(boundary_dist)
 
+            if experiment == "fpar":
+                #print("fpar used", query_counter.queries, "queries. Setting this as the cap for HSJA")
+                print("fpar used", query_counter.queries, "queries.")
+                if query_counter.queries > fpar_max_queries:
+                    fpar_max_queries = query_counter.queries
+                fpar_total_queries += query_counter.queries
+                #query_counter.max_queries = query_counter.queries
+
             if experiment in CFG.USE_HSJA:
                 final_img = run_hsja(model, sample, boundary_img)
                 eval_end[experiment].append(compute_distance(final_img, sample))
+
+            if experiment == "random":
+                random_total_queries += query_counter.queries
 
             # Saving computed images to folder /results
             # result_image = np.concatenate([sample, np.zeros((sample.shape[0],8,3)), start_image, np.zeros((sample.shape[0],8,3)), bs_img, np.zeros((sample.shape[0],8,3)), final_img], axis = 1)
@@ -95,9 +136,6 @@ if __name__ == '__main__':
             #    class_names[np.argmax(model.predict(final_img))]))
             # plt.show()
 
-        if CFG.PRINT_ITERATION_MEDIANS_AND_MEANS:
-            print_current_medians_and_averages(experiments, eval_start, eval_end)
-        
         if CFG.PRINT_ITERATION_SUMMARY:
             start_distances = []
             end_distances = []
@@ -107,6 +145,13 @@ if __name__ == '__main__':
             best_exp[np.argmin(end_distances)] += 1
 
             print_iteration_summary(experiments, start_distances, end_distances, best_exp)
+
+        if CFG.PRINT_ITERATION_MEDIANS_AND_MEANS:
+            print_current_medians_and_averages(experiments, eval_start, eval_end)
+
+        print("fpar max queries used:", fpar_max_queries)
+        print("fpar mean queries used:", fpar_total_queries / (i+1))
+        print("random mean queries used:", random_total_queries / (i+1))
 
     #plot_all_experiments(experiments)
     #plot_median(experiments)

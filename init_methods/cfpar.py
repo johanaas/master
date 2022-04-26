@@ -13,8 +13,7 @@ import jenkspy
 
 def create_fperturb_binary_seach_in_different_freq(img, model, params):
     
-    # Create an adversarial image in frequency domain
-    perturbed = create_fperurb_rgb(img, model, params)
+    
 
     """
     plt.imshow(perturbed)
@@ -36,14 +35,27 @@ def create_fperturb_binary_seach_in_different_freq(img, model, params):
     cv2.circle(band_mask, (112,112), 75, 0, -1)
     high_mask = (band_mask == 1)
 
+
+    # Create an adversarial image in frequency domain
+    perturbed = create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask)
+    #plt.imshow(perturbed)
+    #plt.title("Perturbed Image")
+    #plt.show()
     # Reduce L2 distance with binary search in frequency domain
     # Run binary search for frequnecies: Low, medium and High
-
+    print("low_mask")
     final_image1 = create_fperturb_binary_seach(low_mask, perturbed, img, model, params)
-
+    #plt.imshow(final_image1)
+    #plt.title("After low_mask")
+    #plt.show()
     final_image2 = create_fperturb_binary_seach(med_mask, final_image1, img, model, params)
+    #plt.imshow(final_image2)
+    #plt.title("After med_mask")
+    #plt.show()
     final_image3 = create_fperturb_binary_seach(high_mask, final_image2, img, model, params)
-
+    #plt.imshow(final_image3)
+    #plt.title("After high_mask")
+    #plt.show()
     """
     final_image3 += np.abs(np.min(final_image3))
     final_image3 = final_image3 / np.max(final_image3)
@@ -78,6 +90,11 @@ def create_fperturb_binary_seach(mask, perturbed, img, model, params):
             # Binary search on the masks of the magnitudes of original and perturbed images
             blended = copy.deepcopy(magnitude)
             blended[mask] = (1 - mid) * org_magnitude[mask] + mid * magnitude[mask]
+
+            #if high == 1.0 and low == 0.0 and i == 0:
+            #    plt.imshow(np.log(blended))
+            #    plt.title("Blended_1")
+            #    plt.show()
 
             # Inverse the Fourier Transformation with blended magnitude and phase
             b = blended*np.sin(phase)
@@ -115,6 +132,10 @@ def create_fperturb_binary_seach(mask, perturbed, img, model, params):
             blended = copy.deepcopy(magnitude)
             blended[mask] = (1 - high) * org_magnitude[mask] + high * magnitude[mask]
 
+            if i == 0:
+                plt.imshow(np.log(blended))
+                plt.title("Blended_2")
+                plt.show()
 
             phase = np.angle(rgb_fft, deg=False)
             b = blended*np.sin(phase)
@@ -133,7 +154,7 @@ def create_fperturb_binary_seach(mask, perturbed, img, model, params):
 
     return final_image
 
-def create_fperurb_rgb(img, model, params):
+def create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask):
 
     # Append noise in each channel of image
     transformed_channels = []
@@ -144,25 +165,34 @@ def create_fperurb_rgb(img, model, params):
         # Retrive magnitude and phase from the transformation
         magnitude = np.log(np.abs(rgb_fft))
         phase = np.angle(rgb_fft, deg=False)
+        #plt.imshow(img)
+        #plt.title("Original image")
+        #plt.show()
         #plt.imshow(magnitude)
         #plt.title("Magnitude: Original")
         #plt.show()
         # Create masks based on the values of image to target all three frequencies
-        high_mask = (magnitude < 1)
-        med_mask = (magnitude > 2) | (magnitude < 4)
-        low_mask = (magnitude > 5)
+        #high_mask = (magnitude < 1)
+        #med_mask = (magnitude > 2) | (magnitude < 4)
+        #low_mask = (magnitude > 5)
 
         # Append noise in each of the frequencies
         magnitude[high_mask] = np.random.uniform(0, 1, size = (224,224))[high_mask]
-        #plt.imshow(magnitude)
+        magnitude_img = np.log(np.abs(rgb_fft))
+        magnitude_img[high_mask] = np.random.uniform(0, 1, size = (224,224))[high_mask]
+        #plt.imshow(magnitude_img)
         #plt.title("Magnitude: High_mask")
         #plt.show()
         magnitude[med_mask] = np.random.uniform(2, 4, size = (224,224))[med_mask]
-        #plt.imshow(magnitude)
+        magnitude_img = np.log(np.abs(rgb_fft))
+        magnitude_img[med_mask] = np.random.uniform(2, 4, size = (224,224))[med_mask]
+        #plt.imshow(magnitude_img)
         #plt.title("Magnitude: Med_mask")
         #plt.show()
         magnitude[low_mask] = np.random.uniform(5, 9, size = (224,224))[low_mask]
-        #plt.imshow(magnitude)
+        magnitude_img = np.log(np.abs(rgb_fft))
+        magnitude_img[low_mask] = np.random.uniform(5, 9, size = (224,224))[low_mask]
+        #plt.imshow(magnitude_img)
         #plt.title("Magnitude: Low_mask")
         #plt.show()
 

@@ -95,7 +95,7 @@ def hsja(model,
 		params['cur_iter'] = j + 1
 
 		if query_counter.queries > query_counter.max_queries:
-			print("Max queries: ", query_counter.queries)
+			print("Max queries exceeded: ", query_counter.queries, "used. Cap was", query_counter.max_queries)
 			break
 		# Choose delta.
 		delta = select_delta(params, dist_post_update)
@@ -103,10 +103,6 @@ def hsja(model,
 		# Choose number of evaluations.
 		num_evals = int(params['init_num_evals'] * np.sqrt(j+1))
 		num_evals = int(min([num_evals, params['max_num_evals']]))
-
-		if (query_counter.queries + num_evals) > query_counter.max_queries:
-			print("Max queries exceeded! Stopped at {} would have been {}".format(query_counter.queries, query_counter.queries + num_evals))
-			break
 
 		# approximate gradient.
 		gradf = approximate_gradient(model, perturbed, num_evals, 

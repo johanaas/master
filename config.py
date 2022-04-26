@@ -2,23 +2,23 @@
 
 # Main seed. If not None it will be used as a seed for
 # numpy and pythons random module
-SEED = 69
+SEED = 694
 
 # Experiments to run. One experiment consists of using that
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["random"]
+EXPERIMENTS = ["circular_fpar", "fpar", "improved_fpar"]
 
 
 # List of experiments that use HSJA. Name have to match the
 # names in EXPERIMENTS
-USE_HSJA = ["random"]
+USE_HSJA = []
 
 
 # Max number of model queries allowed. Attack breaks if
 # this value is exceeded
-MAX_NUM_QUERIES = 123
+MAX_NUM_QUERIES = 1000
 
 
 # The number of images to load from the dataset
@@ -47,10 +47,10 @@ LOG_DIR = None #"logs"
 
 
 # Collect distance and queries in order to plot graphs
-RUN_EVAL = True
+RUN_EVAL = False
 
 # Print median and average distances for each iteration
-PRINT_ITERATION_MEDIANS_AND_MEANS = False
+PRINT_ITERATION_MEDIANS_AND_MEANS = True
 
 # Print start and end distances for each experiment in
 # each iteration
