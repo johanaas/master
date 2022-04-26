@@ -37,7 +37,7 @@ MODEL = "resnet50"
 DATASET = "imagenet"
 
 # The path to the manually downloaded imagenet dataset
-IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
+IMAGENET_PATH = r"C:\Users\kamidtli\dev\ILSVRC2012_img_val"
 
 
 # If not None all print statements are written to a logfile
