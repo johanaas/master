@@ -122,7 +122,7 @@ class ResnetModel50():
         else:
             _x = x
         prob = self.model.predict(_x, batch_size = batch_size)
-        query_counter.queries += len(prob)
+        #query_counter.queries += len(prob)
         return prob
 
 class ResnetModel101():
@@ -142,7 +142,7 @@ class ResnetModel101():
         else:
             _x = x
         prob = self.model.predict(_x, batch_size = batch_size)
-        query_counter.queries += len(prob)
+        #query_counter.queries += len(prob)
         return prob
 
 

@@ -9,6 +9,10 @@ def init_queries():
     eval_exp = {}
     global active_exp
     active_exp = ""
+    global prev_dist
+    prev_dist = -1
+    global end_dist
+    end_dist = []
 
 def reset_queries():
     global queries

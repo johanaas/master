@@ -81,7 +81,10 @@ def hsja(model,
 		params['theta'] = params['gamma'] / (params['d'] ** 2)
 		
 	# Initialize.
-	perturbed = start_perturbed
+	if start_perturbed == None:
+		perturbed = initialize(model, sample, params)
+	else:
+		perturbed = start_perturbed
 	
 
 	# Project the initialization to the boundary.
@@ -116,7 +119,7 @@ def hsja(model,
 		if params['stepsize_search'] == 'geometric_progression':
 			# find step size.
 			epsilon = geometric_progression_for_stepsize(perturbed, 
-				update, dist, model, params)
+				update, dist, model, params, sample)
 
 			# Update the sample. 
 			perturbed = clip_image(perturbed + epsilon * update, 
@@ -132,7 +135,7 @@ def hsja(model,
 			epsilons_shape = [20] + len(params['shape']) * [1]
 			perturbeds = perturbed + epsilons.reshape(epsilons_shape) * update
 			perturbeds = clip_image(perturbeds, params['clip_min'], params['clip_max'])
-			idx_perturbed = decision_function(model, perturbeds, params)
+			idx_perturbed = decision_function(model, perturbeds, params, sample)
 
 			if np.sum(idx_perturbed) > 0:
 				# Select the perturbation that yields the minimum distance # after binary search.
@@ -167,7 +170,7 @@ def approximate_gradient(model, sample, num_evals, delta, params):
 	rv = (perturbed - sample) / delta
 
 	# query the model.
-	decisions = decision_function(model, perturbed, params)
+	decisions = decision_function(model, perturbed, params, sample)
 	decision_shape = [len(decisions)] + [1] * len(params['shape'])
 	fval = 2 * decisions.astype(float).reshape(decision_shape) - 1.0
 
@@ -232,7 +235,7 @@ def binary_search_batch(original_image, perturbed_images, model, params):
 		mid_images = project(original_image, perturbed_images, mids, params)
 
 		# Update highs and lows based on model decisions.
-		decisions = decision_function(model, mid_images, params)
+		decisions = decision_function(model, mid_images, params, original_image)
 		lows = np.where(decisions == 0, mids, lows)
 		highs = np.where(decisions == 1, mids, highs)
 
@@ -266,7 +269,7 @@ def initialize(model, sample, params):
 		while True:
 			random_noise = np.random.uniform(params['clip_min'], 
 				params['clip_max'], size = params['shape'])
-			success = decision_function(model,random_noise[None], params)[0]
+			success = decision_function(model,random_noise[None], params, sample)[0]
 			num_evals += 1
 			if success:
 				break
@@ -280,7 +283,7 @@ def initialize(model, sample, params):
 		while high - low > 0.001:
 			mid = (high + low) / 2.0
 			blended = (1 - mid) * sample + mid * random_noise 
-			success = decision_function(model, blended[None], params)
+			success = decision_function(model, blended[None], params, sample)
 			if success:
 				high = mid
 			else:
@@ -294,7 +297,7 @@ def initialize(model, sample, params):
 	return initialization
 
 
-def geometric_progression_for_stepsize(x, update, dist, model, params):
+def geometric_progression_for_stepsize(x, update, dist, model, params, sample):
 	"""
 	Geometric progression to search for stepsize.
 	Keep decreasing stepsize by half until reaching 
@@ -304,7 +307,7 @@ def geometric_progression_for_stepsize(x, update, dist, model, params):
 
 	def phi(epsilon):
 		new = x + epsilon * update
-		success = decision_function(model, new[None], params)
+		success = decision_function(model, new[None], params, sample)
 		return success
 
 	while not phi(epsilon):

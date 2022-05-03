@@ -32,7 +32,7 @@ def plot_all_experiments(experiements):
         for line in qc.eval_exp[exp]:
             extract_xy = list(zip(*line))
             plt.plot(extract_xy[1], extract_xy[0], "{}-".format(list_of_colors[i]))
-    #plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     #plt.show()
 
 
@@ -67,5 +67,43 @@ def plot_median(experiements):
         
         #print("y: ", y)
         plt.plot(x, y, "{}-".format(list_of_colors[i]))
+    plt.legend(experiements)
+    plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
+    #plt.show()
+
+
+def padding_queries(experiements):
+
+    padding = 1500
+
+    for i, exp in enumerate(experiements):
+        for img in qc.eval_exp[exp]: # img: [(), (), ()]
+            end_dist = img[-1][0]
+            end_query = img[-1][1]
+            for j in range(end_query + 1, padding):
+                img.append((end_dist, j))
+
+def plot_success_rate(experiements):
+
+    end_dist = {}
+
+    list_of_colors = ["k", "r", "c", "m", "y", "b"]
+    assert len(list_of_colors) >= len(experiements)
+
+    for i, exp in enumerate(experiements):
+        end_dist[exp] = []
+        for img in qc.eval_exp[exp]: # img: [(), (), ()]
+            end_dist[exp].append(img[-1][0])
+
+    
+    for j, exp in enumerate(experiements):
+        x = []
+        y = []
+        for i in np.arange(0, 30.1, 0.1):
+            x.append(i)
+            s_rate = 1 - len([element for element in end_dist[exp] if element > i]) / len(end_dist[exp])
+            y.append(s_rate)
+        plt.plot(x, y, "{}-".format(list_of_colors[j]))
+    plt.legend(experiements)
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     #plt.show()

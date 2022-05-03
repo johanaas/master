@@ -2,9 +2,11 @@ import keras
 import numpy as np
 import query_counter
 
-class ResnetModel50():
+# Don't work
+
+class EfficientNetB7():
     def __init__(self):
-        self.model = keras.applications.resnet50.ResNet50(
+        self.model = keras.applications.efficientnet.EfficientNetB7(
             include_top=True, 
             weights='imagenet', 
             input_tensor=None, 

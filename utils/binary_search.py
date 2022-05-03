@@ -12,7 +12,7 @@ def binary_search(model, sample, noise, params):
         mid = (high + low) / 2.0
 
         blended = (1 - mid) * sample + mid * noise 
-        success = decision_function(model, blended[None], params)
+        success = decision_function(model, blended[None], params, sample)
         if success:
             high = mid
         else:

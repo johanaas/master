@@ -2,9 +2,11 @@ import keras
 import numpy as np
 import query_counter
 
-class ResnetModel50():
+# Requries (299, 299, 3)
+
+class InceptionV3():
     def __init__(self):
-        self.model = keras.applications.resnet50.ResNet50(
+        self.model = keras.applications.inception_v3.InceptionV3(
             include_top=True, 
             weights='imagenet', 
             input_tensor=None, 

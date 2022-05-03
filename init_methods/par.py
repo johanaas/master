@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from utils.decision_function import decision_function
 import query_counter
+import evaluation
+from utils.compute_distance import compute_distance
 
 def get_par_patches(img, model, params, noise=[], plot_each_step=False):
     """Returns random noise on important patches identified
@@ -68,7 +70,7 @@ def remove_noise(img, noise, patch, model, params, plot_each_step=False):
             noise_img[start_x:end_x, start_y:end_y, :] = img[start_x:end_x, start_y:end_y, :]
 
             # Predict with noise removed on the area to check
-            if decision_function(model,noise_img[None], params)[0]: #np.argmax(model.predict(noise_img)) != params["original_label"]:
+            if decision_function(model,noise_img[None], params, img)[0]: #np.argmax(model.predict(noise_img)) != params["original_label"]:
                 # Original image in this patch is adversarial
                 # We should remove the noise in this patch
                 noise[start_x:end_x, start_y:end_y, :] = img[start_x:end_x, start_y:end_y, :]
