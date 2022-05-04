@@ -21,8 +21,8 @@ def improved_fpar(sample, model, params):
     return fpar_img
 
 def circular_fpar(sample, model, params):
-    fourier_noise_on_img = cfunction(np.copy(sample), model, params)
+    fourier_noise_on_img = cfunction(np.copy(sample), model, params, plot_each_step=False)
     fourier_noise_on_img = clip_image(np.copy(fourier_noise_on_img), clip_max=1.0, clip_min=0.0)
-    fpar_img = get_par_patches(sample, model, params, noise=np.copy(fourier_noise_on_img), plot_each_step=False)
+    fpar_img = get_par_patches(sample, model, params, noise=np.copy(fourier_noise_on_img), plot_each_iteration=True)
 
     return fpar_img

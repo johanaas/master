@@ -9,7 +9,6 @@ from utils.compute_distance import compute_distance
 import cv2
 import scipy.fftpack as fp
 import copy
-import jenkspy
 
 def fourier_attack(img, model, params):
     

@@ -20,6 +20,8 @@ from utils.printing import print_current_medians_and_averages, print_sample_prog
 from matplotlib import pyplot as plt
 from utils.decision_function import decision_function
 
+import sys
+
 if __name__ == '__main__':
     
     if CFG.LOG_DIR is not None:
@@ -71,19 +73,23 @@ if __name__ == '__main__':
             query_counter.reset_queries()
             start_eval_experiment(experiment)
 
-            """
-            plt.imshow(sample)
-            plt.title("Original image")
-            plt.show()
-            """
 
             start_image = get_start_image(
                 experiment=experiment,
                 sample=sample,
                 model=model,
                 params=params)
-            
+
             """
+            fig, axs = plt.subplots(1, 2)
+
+            axs[0].imshow(sample)
+            axs[0].set_title("Original image")
+            axs[1].imshow(start_image)
+            axs[1].set_title("Final perturbation")
+            plt.show()
+
+            
             success = decision_function(model, start_image[None], params)
             print("Is adversarial?", success)
 

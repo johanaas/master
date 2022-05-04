@@ -8,7 +8,7 @@ SEED = 694
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["circular_fpar", "fpar", "improved_fpar"]
+EXPERIMENTS = ["circular_fpar"]
 
 
 # List of experiments that use HSJA. Name have to match the
@@ -24,7 +24,7 @@ MAX_NUM_QUERIES = 1000
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 5
+NUM_IMAGES = 1
 
 
 # The model to use
@@ -37,7 +37,7 @@ MODEL = "resnet50"
 DATASET = "imagenet"
 
 # The path to the manually downloaded imagenet dataset
-IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
+IMAGENET_PATH = r"C:\Users\kamidtli\dev\ILSVRC2012_img_test\test"
 
 
 # If not None all print statements are written to a logfile

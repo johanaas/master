@@ -1,10 +1,11 @@
 from matplotlib import pyplot as plt
 import cv2
 import numpy as np
+from utils.compute_distance import compute_distance
 from utils.decision_function import decision_function
 import query_counter
 
-def get_par_patches(img, model, params, noise=[], plot_each_step=False):
+def get_par_patches(img, model, params, noise=[], plot_each_step=False, plot_each_iteration=False):
     """Returns random noise on important patches identified
     through querying the model. The returned image is between
     [0, 1] and is the noise overlayed on the original image
@@ -28,16 +29,35 @@ def get_par_patches(img, model, params, noise=[], plot_each_step=False):
 
     saved_patches = [(0, 0, img_width)]
 
+    if plot_each_iteration:
+        noise_to_plot = get_noise_to_plot(noise, img)
+        plt.imshow(noise_to_plot, vmin=np.min(noise_to_plot), vmax=np.max(noise_to_plot))
+        plt.title("Input PAR noise - img: {}".format(compute_distance(noise, img)))
+        plt.show()
+
     i = 0
 
+    prev_region_size = img_width
     new_noise = noise
     while len(saved_patches) > 0:
         saved_patch = saved_patches.pop(0)
         new_patches, new_noise = remove_noise(img, new_noise, saved_patch, model, params, plot_each_step=plot_each_step)
+        if plot_each_iteration:
+            current_region_size = saved_patch[-1]
+            if current_region_size != prev_region_size:
+                prev_region_size = current_region_size
+                noise_to_plot = get_noise_to_plot(new_noise, img)
+                plt.imshow(noise_to_plot)
+                plt.title("Noise after par iteration: {}".format(compute_distance(new_noise, img)))
+                plt.show()
         if new_patches != None:
             for p in new_patches:
                 saved_patches.append(p)
         i += 1
+
+    plt.imshow(noise)
+    plt.title("Final image with perturbation: {}".format(compute_distance(noise, img)))
+    plt.show()
 
     return new_noise
 
@@ -93,3 +113,10 @@ def remove_noise(img, noise, patch, model, params, plot_each_step=False):
     if len(out_patches) > 0:
         return out_patches, noise
     return None, noise
+
+def get_noise_to_plot(noise_img, img):
+    noise_to_plot = np.abs(noise_img - img)
+    noise_to_plot /= np.max(noise_to_plot)
+    zero_mask = [noise_to_plot == 0]
+    noise_to_plot[tuple(zero_mask)] = 0.4
+    return noise_to_plot

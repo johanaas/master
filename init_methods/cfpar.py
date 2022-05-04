@@ -9,17 +9,14 @@ from utils.compute_distance import compute_distance
 import cv2
 import scipy.fftpack as fp
 import copy
-import jenkspy
 
-def create_fperturb_binary_seach_in_different_freq(img, model, params):
+def create_fperturb_binary_seach_in_different_freq(img, model, params, plot_each_step=False):
     
+    if plot_each_step:
+        plt.imshow(img)
+        plt.title("Original image")
+        plt.show()
     
-
-    """
-    plt.imshow(perturbed)
-    plt.title("Classic Perturbed image")
-    plt.show()
-    """
 
     # Create masks for frequencies: Low, medium and High
     band_mask = np.ones((224,224))
@@ -35,27 +32,40 @@ def create_fperturb_binary_seach_in_different_freq(img, model, params):
     cv2.circle(band_mask, (112,112), 75, 0, -1)
     high_mask = (band_mask == 1)
 
-
     # Create an adversarial image in frequency domain
-    perturbed = create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask)
-    #plt.imshow(perturbed)
-    #plt.title("Perturbed Image")
-    #plt.show()
+    perturbed = create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask, plot_each_step=plot_each_step)
+
+    if plot_each_step:
+        plt.imshow(perturbed)
+        plt.title("Perturbed Image: {}".format(compute_distance(perturbed, img)))
+        plt.show()
+
     # Reduce L2 distance with binary search in frequency domain
     # Run binary search for frequnecies: Low, medium and High
-    print("low_mask")
-    final_image1 = create_fperturb_binary_seach(low_mask, perturbed, img, model, params)
-    #plt.imshow(final_image1)
-    #plt.title("After low_mask")
-    #plt.show()
-    final_image2 = create_fperturb_binary_seach(med_mask, final_image1, img, model, params)
-    #plt.imshow(final_image2)
-    #plt.title("After med_mask")
-    #plt.show()
-    final_image3 = create_fperturb_binary_seach(high_mask, final_image2, img, model, params)
-    #plt.imshow(final_image3)
-    #plt.title("After high_mask")
-    #plt.show()
+    final_image1 = create_fperturb_binary_seach(low_mask, perturbed, img, model, params, plot_each_step=plot_each_step)
+
+    if plot_each_step:
+        scaled_image1 = final_image1 / np.max(final_image1)
+        plt.imshow(scaled_image1, cmap="gray", vmin=np.min(scaled_image1), vmax=np.max(scaled_image1))
+        plt.title("After low_mask: {}".format(compute_distance(scaled_image1, img)))
+        plt.show()
+
+    final_image2 = create_fperturb_binary_seach(med_mask, final_image1, img, model, params, plot_each_step=plot_each_step)
+
+    if plot_each_step:
+        scaled_image2 = final_image2 / np.max(final_image2)
+        plt.imshow(scaled_image2, cmap="gray", vmin=np.min(scaled_image2), vmax=np.max(scaled_image2))
+        plt.title("After med_mask: {}".format(compute_distance(scaled_image2, img)))
+        plt.show()
+    
+    final_image3 = create_fperturb_binary_seach(high_mask, final_image2, img, model, params, plot_each_step=plot_each_step)
+    
+    if plot_each_step:
+        scaled_image3 = final_image3 / np.max(final_image3)
+        plt.imshow(scaled_image3, cmap="gray", vmin=np.min(scaled_image3), vmax=np.max(scaled_image3))
+        plt.title("After high_mask: {}".format(compute_distance(scaled_image3, img)))
+        plt.show()
+
     """
     final_image3 += np.abs(np.min(final_image3))
     final_image3 = final_image3 / np.max(final_image3)
@@ -66,7 +76,7 @@ def create_fperturb_binary_seach_in_different_freq(img, model, params):
     """
     return final_image3
 
-def create_fperturb_binary_seach(mask, perturbed, img, model, params):
+def create_fperturb_binary_seach(mask, perturbed, img, model, params, plot_each_step=False):
     # Upper and lower bound
     low = 0.0
     high = 1.0
@@ -132,9 +142,9 @@ def create_fperturb_binary_seach(mask, perturbed, img, model, params):
             blended = copy.deepcopy(magnitude)
             blended[mask] = (1 - high) * org_magnitude[mask] + high * magnitude[mask]
 
-            if i == 0:
-                plt.imshow(np.log(blended))
-                plt.title("Blended_2")
+            if i == 0 and plot_each_step:
+                plt.imshow(np.log(blended), cmap="gray", vmin=np.min(np.log(blended)), vmax=np.max(np.log(blended)))
+                plt.title("Blended first channel")
                 plt.show()
 
             phase = np.angle(rgb_fft, deg=False)
@@ -154,7 +164,7 @@ def create_fperturb_binary_seach(mask, perturbed, img, model, params):
 
     return final_image
 
-def create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask):
+def create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask, plot_each_step=False):
 
     # Append noise in each channel of image
     transformed_channels = []
@@ -168,9 +178,10 @@ def create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask):
         #plt.imshow(img)
         #plt.title("Original image")
         #plt.show()
-        #plt.imshow(magnitude)
-        #plt.title("Magnitude: Original")
-        #plt.show()
+        if i == 0 and plot_each_step:
+            plt.imshow(magnitude, cmap="gray", vmin=np.min(magnitude), vmax=np.max(magnitude))
+            plt.title("Original magnitude")
+            plt.show()
         # Create masks based on the values of image to target all three frequencies
         #high_mask = (magnitude < 1)
         #med_mask = (magnitude > 2) | (magnitude < 4)
@@ -196,9 +207,10 @@ def create_fperurb_rgb(img, model, params, low_mask, med_mask, high_mask):
         #plt.title("Magnitude: Low_mask")
         #plt.show()
 
-        #plt.imshow(magnitude)
-        #plt.title("Magnitude: Perturbed")
-        #plt.show()
+        if i == 0 and plot_each_step:
+            plt.imshow(magnitude, cmap="gray", vmin=np.min(magnitude), vmax=np.max(magnitude))
+            plt.title("Perturbed magnitude")
+            plt.show()
 
         # Inverse the Fourier Transformation with phase and perturbed magnitude 
         magnitude = np.exp(magnitude)
