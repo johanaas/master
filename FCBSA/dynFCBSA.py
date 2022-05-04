@@ -6,15 +6,19 @@ import copy
 from init_methods.par import get_par_patches
 from utils.binary_search import binary_search
 from utils.truncnorm import get_truncated_normal
+import config as CFG
 
 from matplotlib import pyplot as plt
+
+from utils.clip_image import clip_image
 
 def dynFCBSA(model, sample, params, sigma = 0.5):
 
     freq_bands = ["low", "medium", "high"]
+    print("Start: ", np.argmax(model.predict(sample)))
+    original_label = np.argmax(model.predict(sample))
 
     # Identify radius r_l and r_h
-    #r_l, r_h, origin, standard_dev = select_radius(sample, sigma)
     freq_params = select_freq_params(sample, sigma)
 
     # Create mask for each frequency band
@@ -33,22 +37,40 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
                 break
             assert num_evals < 1e4,"Initialization failed! "
             "Use a misclassified image as `target_image`" 
-    
+
+    print("Init: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
+
     # Binary search in the different frequency bands
-    for band in freq_bands:
-        perturbed = frequnecy_band_binary_search(band, perturbed, sample, model, params, freq_params, masks)
-    
+    #for band in freq_bands:
+    #    perturbed = frequnecy_band_binary_search(band, perturbed, sample, model, params, freq_params, masks)
+    perturbed = frequnecy_band_binary_search("low", perturbed, sample, model, params, freq_params, masks)
+    print("After low: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
+    perturbed = frequnecy_band_binary_search("medium", perturbed, sample, model, params, freq_params, masks)
+    print("After med: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
+    perturbed = frequnecy_band_binary_search("high", perturbed, sample, model, params, freq_params, masks)
+    print("After BS: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
     # Perform PAR
     perturbed = get_par_patches(sample, model, params, noise=np.copy(perturbed), plot_each_step=False)
-
+    perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
+    print("After PAR: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
     # Last BS
     perturbed = binary_search(model, sample, perturbed, params)
+    perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
+    print("Last BS: ", np.argmax(model.predict(perturbed)))
+    assert np.argmax(model.predict(perturbed)) != original_label
 
     print("L2: ", np.linalg.norm(sample - perturbed))
 
     return perturbed
 
 def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_params, masks):
+    
+    #print("CHECK *** BS: ", np.argmax(model.predict(perturbed)))
     # Upper and lower bound
     low = 0.0
     high = 1.0
@@ -89,8 +111,8 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
 
         # Check if the search was successful
         # If the blended image is adversarial: True
+        final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
         success = decision_function(model, final_image[None], params, img)
-
         if success:
             high = mid
         else:
@@ -109,7 +131,6 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
             blended = copy.deepcopy(magnitude)
             blended[masks[k][band]] = (1 - high) * org_magnitude[masks[k][band]] + high * magnitude[masks[k][band]]
 
-
             phase = np.angle(rgb_fft, deg=False)
             b = blended*np.sin(phase)
             a = blended*np.cos(phase)
@@ -125,6 +146,15 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
                                 transformed_channels[1].astype(float), 
                                 transformed_channels[2].astype(float)])
 
+    final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
+    
+    if high == 1.0:
+        print("setting old value")
+        print("****************************************************")
+        final_image = perturbed
+    success = decision_function(model, final_image[None], params, img)
+    assert success == 1
+    
     return final_image
 
 
@@ -139,36 +169,20 @@ def initial_perturbation(model, img, params, freq_params, masks, sigma):
         # Retrive magnitude and phase from the transformation
         magnitude = np.log(np.abs(rgb_fft))
         phase = np.angle(rgb_fft, deg=False)
-
-        #fig, axs = plt.subplots(1,4)
-        #axs[0].hist(magnitude.flatten(), bins='auto')
-        #plt.show()
         
         min_magnitude = np.min(magnitude)
         max_magnitude = np.max(magnitude)
         channel_mean = freq_params[k]["mean"]
-        #channel_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=)
         
         # Append noise in each of the frequencies
         high_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=min_magnitude, high=freq_params[k]["left_clip_tail"], shape=magnitude.shape, mask=masks[k]["high"])
-        #axs[1].hist(high_distribution[masks[k]["high"]].flatten(), bins='auto')
         magnitude[masks[k]["high"]] = high_distribution[masks[k]["high"]]
 
         medium_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=freq_params[k]["left_clip_tail"], high=freq_params[k]["right_clip_tail"], shape=magnitude.shape, mask=masks[k]["medium"])
-        #axs[2].hist(medium_distribution[masks[k]["medium"]].flatten(), bins='auto')
         magnitude[masks[k]["medium"]] = medium_distribution[masks[k]["medium"]]  
 
         low_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=freq_params[k]["right_clip_tail"], high=max_magnitude, shape=magnitude.shape, mask=masks[k]["low"])
-        #axs[3].hist(low_distribution[masks[k]["low"]].flatten(), bins='auto')
         magnitude[masks[k]["low"]] = low_distribution[masks[k]["low"]]  
-
-        #print(min_magnitude, freq_params[k]["left_clip_tail"], channel_mean, freq_params[k]["right_clip_tail"], max_magnitude)
-        #axs[4].hist(magnitude.flatten(), bins='auto')
-
-        #normal_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=min_magnitude, high=max_magnitude, shape=magnitude.shape)
-        #axs[5].hist(normal_distribution.flatten(), bins='auto')
-        #plt.show()
-
 
         # Inverse the Fourier Transformation with phase and perturbed magnitude 
         magnitude = np.exp(magnitude)
@@ -184,11 +198,10 @@ def initial_perturbation(model, img, params, freq_params, masks, sigma):
     final_image = np.dstack([transformed_channels[0].astype(float), 
                              transformed_channels[1].astype(float), 
                              transformed_channels[2].astype(float)])
-    
+    final_image += np.abs(np.min(final_image))
+    final_image = final_image / np.max(final_image)
+
     success = decision_function(model, final_image[None], params, img)
-    #plt.imshow(final_image)
-    #plt.title("Init perturb")
-    #plt.show()
 
     return final_image, success
 
@@ -226,15 +239,10 @@ def create_masks(freq_params):
         cv2.circle(mask, (112,112), freq_params[k]["radius"][0], 1, -1)
         v["high"] = (mask == 0)
     
-    #plt.imshow(masks[0]["low"].astype(int))
-    #plt.show()
-
     return masks
 
 
 def select_freq_params(img, sigma):
-    
-
     freq_params = {
         0: {
             "radius": (),

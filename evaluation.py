@@ -69,7 +69,7 @@ def plot_median(experiements):
         plt.plot(x, y, "{}-".format(list_of_colors[i]))
     plt.legend(experiements)
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
-    #plt.show()
+    plt.show()
 
 
 def padding_queries(experiements):
@@ -106,4 +106,4 @@ def plot_success_rate(experiements):
         plt.plot(x, y, "{}-".format(list_of_colors[j]))
     plt.legend(experiements)
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
-    #plt.show()
+    plt.show()

@@ -1,6 +1,5 @@
 from .Resnet50 import ResnetModel50
 from .Resnet101 import ResnetModel101
-from .robustResnet50 import robustResnetModel50
 from .VGG16 import VGG16
 from .VGG19 import VGG19
 from .Xception import Xception

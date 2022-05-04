@@ -29,8 +29,6 @@ if __name__ == '__main__':
 
     model = get_model(CFG.MODEL)
 
-    
-
     dataset = get_dataset(CFG.DATASET, CFG.NUM_IMAGES)
 
     experiments = CFG.EXPERIMENTS
@@ -46,9 +44,9 @@ if __name__ == '__main__':
 
         # TODO: Fetch original_label fra valid set
         original_label = np.argmax(model.predict(sample))
-
+        
         # TODO: Discard if original_label != label_validation_dataset
-
+        
         params = {
                 "original_label": original_label,
                 "target_label": None,
@@ -72,15 +70,20 @@ if __name__ == '__main__':
             print("Experiment: ", experiment)
 
             if experiment == "hsja":
-                hsja(model, sample)
+                perturbed = hsja(model, sample)
             else:
-                run_fcbsa(experiment, model, sample, params)
-        
+                perturbed = run_fcbsa(experiment, model, sample, params)
+
+            #fig, axs = plt.subplots(1,2)
+            #axs[0].imshow(sample)
+            #axs[0].set_title(str(np.argmax(model.predict(sample))))
+            #axs[1].imshow(perturbed)
+            #axs[1].set_title(str(np.argmax(model.predict(perturbed))))
+            #plt.show()
         with open('checkpoint/query_counter_eval_exp.json', 'w') as f:
-            json.dump(query_counter.eval_exp, f)
+            json.dump(query_counter.eval_exp, f)   
         
     if CFG.RUN_EVAL:
         padding_queries(experiments)
-        #plot_all_experiments(experiments)
         plot_median(experiments)
         plot_success_rate(experiments)
