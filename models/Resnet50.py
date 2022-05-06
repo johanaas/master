@@ -1,6 +1,5 @@
 import keras
 import numpy as np
-import query_counter
 
 class ResnetModel50():
     def __init__(self):
@@ -18,6 +17,6 @@ class ResnetModel50():
             _x = np.expand_dims(x, 0) 
         else:
             _x = x
+        _x = keras.applications.resnet50.preprocess_input(np.copy(_x))
         prob = self.model.predict(_x, batch_size = batch_size)
-        #query_counter.queries += len(prob)
         return prob
