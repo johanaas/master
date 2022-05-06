@@ -1,22 +1,50 @@
+from cProfile import label
 import cv2
 import numpy as np
 import random
 import os
 import config as CFG
+from utils.imagenet_human_readable_labels import get_classname
 
+from mat4py import loadmat
 
-def load_imagenet(num_images):
+import sys
+
+def load_imagenet(num_images, labels_file_path=None):
     path = CFG.IMAGENET_PATH
+    """
+    random_filenames = [
+        x for x in os.listdir(path)
+        if os.path.isfile(os.path.join(path, x))
+        ][:10]
+    """
     random_filenames = random.sample([
         x for x in os.listdir(path)
         if os.path.isfile(os.path.join(path, x))
         ], num_images)
 
     random_images = []
+    image_indices = []
     for x in random_filenames:
         random_images.append(process_image(os.path.join(path, x)))
+        
+        if labels_file_path != None:
+            image_num = int(x.split(".")[0].split("_")[-1])
+            image_indices.append(image_num - 1)
 
-    return random_images
+    labels = []    
+    if labels_file_path != None:
+        with open(labels_file_path) as file:
+            for index, line in enumerate(file):
+                if index in image_indices:
+                    label = int(line)
+                    labels.append(label)
+                    #print(label, ":", get_classname(label - 1))
+    print(image_indices)
+    print(len(image_indices))
+    print(labels)
+    print(len(labels))
+    return random_images, labels
 
 def crop_center(img,cropx,cropy):
     y,x,z = img.shape

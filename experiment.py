@@ -20,6 +20,8 @@ from utils.printing import print_current_medians_and_averages, print_sample_prog
 from matplotlib import pyplot as plt
 from utils.decision_function import decision_function
 
+from utils.imagenet_human_readable_labels import get_classname, get_imagenet_classname
+
 import json
 
 from FCBSA import run_fcbsa
@@ -29,11 +31,16 @@ if __name__ == '__main__':
 
     model = get_model(CFG.MODEL)
 
-    dataset = get_dataset(CFG.DATASET, CFG.NUM_IMAGES)
+    dataset, labels = get_dataset(
+        CFG.DATASET,
+        CFG.NUM_IMAGES,
+        labels=CFG.LABELS if CFG.LABELS != None else None)
 
     experiments = CFG.EXPERIMENTS
     query_counter.init_queries()
     init_plotting(experiments)
+
+    counter = 0
 
     for i, sample in enumerate(dataset):
 
@@ -44,8 +51,17 @@ if __name__ == '__main__':
 
         # TODO: Fetch original_label fra valid set
         original_label = np.argmax(model.predict(sample))
+        true_label = labels[i]
+
+        print("Predicted class:\t", original_label, get_imagenet_classname(original_label))
+        print("True class:\t\t", true_label, get_classname(true_label))
+
+        if get_classname(true_label) == get_imagenet_classname(original_label):
+            counter += 1
         
         # TODO: Discard if original_label != label_validation_dataset
+
+        continue
         
         params = {
                 "original_label": original_label,
@@ -82,7 +98,9 @@ if __name__ == '__main__':
             #plt.show()
         with open('checkpoint/query_counter_eval_exp.json', 'w') as f:
             json.dump(query_counter.eval_exp, f)   
-        
+
+    print("Corerctly classified:", counter)
+
     if CFG.RUN_EVAL:
         padding_queries(experiments)
         plot_median(experiments)
