@@ -53,11 +53,13 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
     perturbed = frequnecy_band_binary_search("high", perturbed, sample, model, params, freq_params, masks)
     print("After BS: ", np.argmax(model.predict(perturbed)))
     assert np.argmax(model.predict(perturbed)) != original_label
+
     # Perform PAR
     perturbed = get_par_patches(sample, model, params, noise=np.copy(perturbed), plot_each_step=False)
     perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
     print("After PAR: ", np.argmax(model.predict(perturbed)))
     assert np.argmax(model.predict(perturbed)) != original_label
+
     # Last BS
     perturbed = binary_search(model, sample, perturbed, params)
     perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
@@ -113,6 +115,7 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
         # If the blended image is adversarial: True
         final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
         success = decision_function(model, final_image[None], params, img)
+        print(success, compute_distance(final_image, img))
         if success:
             high = mid
         else:
@@ -147,7 +150,7 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
                                 transformed_channels[2].astype(float)])
 
     final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
-    
+
     if high == 1.0:
         print("setting old value")
         print("****************************************************")

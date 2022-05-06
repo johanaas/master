@@ -4,9 +4,9 @@ from .cifar10 import load_cifar10
 from .cifar100 import load_cifar100
 from .mnist import load_mnist
 
-def get_dataset(name, num_images=1):
+def get_dataset(name, num_images=1, labels=None):
   if name == "imagenet":
-    return load_imagenet(num_images)
+    return load_imagenet(num_images, labels)
   elif name == "cifar10":
     return load_cifar10(num_images)
   elif name == "cifar100":
