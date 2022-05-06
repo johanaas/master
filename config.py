@@ -24,7 +24,7 @@ MAX_NUM_QUERIES = 1000
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 1000
+NUM_IMAGES = 5
 
 
 # The model to use
@@ -42,10 +42,10 @@ DEFENCE = None
 DATASET = "imagenet"
 
 # The path to the manually downloaded imagenet dataset
-IMAGENET_PATH = r"C:\Users\kamidtli\dev\ILSVRC2012_img_val"
+IMAGENET_PATH = r"C:\Users\johanaas\Documents\new_HSJA\ILSVRC2012_img_val"
 
 # The path to the labels file. If None, no labels are returned from get_dataset.
-LABELS = r"C:\Users\kamidtli\dev\ILSVRC2012_validation_ground_truth.txt"
+LABELS = r"C:\Users\johanaas\Documents\new_HSJA\ILSVRC2012_validation_ground_truth.txt"
 
 
 # If not None all print statements are written to a logfile
