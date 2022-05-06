@@ -2,13 +2,13 @@
 
 # Main seed. If not None it will be used as a seed for
 # numpy and pythons random module
-SEED = 13
+SEED = 50
 
 # Experiments to run. One experiment consists of using that
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["dyn-fcbsa2.5"]#["fcbsa", "dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
+EXPERIMENTS = ["dyn-fcbsa2", "hsja"] #["dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
 
 
 # List of experiments that use HSJA. Name have to match the
@@ -18,13 +18,13 @@ USE_HSJA = ["random"]
 
 # Max number of model queries allowed. Attack breaks if
 # this value is exceeded
-MAX_NUM_QUERIES = 1000
+MAX_NUM_QUERIES = 250
 
 
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 50
+NUM_IMAGES = 10
 
 
 # The model to use
@@ -34,7 +34,7 @@ MODEL = "resnet50"
 
 # Choose if or which defence to use
 # Supported values: "None | JPEG"
-DEFENCE = None
+DEFENCE = "JPEG"
 
 
 # The dataset to use
@@ -48,7 +48,7 @@ IMAGENET_PATH = r"C:\Users\johanaas\Documents\HSJA\ILSVRC2012\test"
 # If not None all print statements are written to a logfile
 # The directory has to be manually created, and the logfile
 # is automatically created inside the directory
-LOG_DIR = "logs"
+LOG_DIR = None #"logs"
 
 
 # Collect distance and queries in order to plot graphs

@@ -33,7 +33,7 @@ def plot_all_experiments(experiements):
             extract_xy = list(zip(*line))
             plt.plot(extract_xy[1], extract_xy[0], "{}-".format(list_of_colors[i]))
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
-    #plt.show()
+    plt.show()
 
 
 def plot_median(experiements):
@@ -41,7 +41,7 @@ def plot_median(experiements):
     list_of_colors = ["k", "r", "c", "m", "y", "b"]
     assert len(list_of_colors) >= len(experiements)
 
-    #print(qc.eval_exp)
+    #print(qc.eval_exp["dyn-fcbsa2"])
 
     for i, exp in enumerate(experiements):
 
@@ -76,12 +76,18 @@ def padding_queries(experiements):
 
     padding = 1500
 
+    #end_queries = []
+
     for i, exp in enumerate(experiements):
         for img in qc.eval_exp[exp]: # img: [(), (), ()]
             end_dist = img[-1][0]
             end_query = img[-1][1]
+            #end_queries.append(end_query)
             for j in range(end_query + 1, padding):
                 img.append((end_dist, j))
+    
+    #plt.hist(end_queries, bins="auto")
+    #plt.show()
 
 def plot_success_rate(experiements):
 

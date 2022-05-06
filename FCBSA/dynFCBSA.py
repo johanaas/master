@@ -7,6 +7,7 @@ from init_methods.par import get_par_patches
 from utils.binary_search import binary_search
 from utils.truncnorm import get_truncated_normal
 import config as CFG
+import query_counter
 
 from matplotlib import pyplot as plt
 
@@ -20,7 +21,7 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
 
     # Identify radius r_l and r_h
     freq_params = select_freq_params(sample, sigma)
-
+    print(freq_params)
     # Create mask for each frequency band
     masks = create_masks(freq_params)
 
@@ -50,9 +51,12 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
     perturbed = frequnecy_band_binary_search("medium", perturbed, sample, model, params, freq_params, masks)
     print("After med: ", np.argmax(model.predict(perturbed)))
     assert np.argmax(model.predict(perturbed)) != original_label
+
     perturbed = frequnecy_band_binary_search("high", perturbed, sample, model, params, freq_params, masks)
     print("After BS: ", np.argmax(model.predict(perturbed)))
     assert np.argmax(model.predict(perturbed)) != original_label
+
+
     # Perform PAR
     perturbed = get_par_patches(sample, model, params, noise=np.copy(perturbed), plot_each_step=False)
     perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
@@ -95,6 +99,16 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
             blended = copy.deepcopy(magnitude)
             blended[masks[k][band]] = (1 - mid) * org_magnitude[masks[k][band]] + mid * magnitude[masks[k][band]]
 
+            #if k == 0: #and band == "high":
+                #plt.hist(blended.flatten(), bins="auto")
+                #plt.show()
+                #plt.hist(np.log(blended[masks[k][band]]).flatten(), bins="auto")
+                #plt.show()
+                #plt.imshow(masks[k][band])
+                #plt.show()
+                #plt.imshow(blended)
+                #plt.show()
+            
             # Inverse the Fourier Transformation with blended magnitude and phase
             b = blended*np.sin(phase)
             a = blended*np.cos(phase)
@@ -113,6 +127,11 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
         # If the blended image is adversarial: True
         final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
         success = decision_function(model, final_image[None], params, img)
+        print(success, np.linalg.norm(final_image - img), np.argmax(model.predict(final_image)) , query_counter.queries)
+
+        #plt.imshow(final_image)
+        #plt.show()
+
         if success:
             high = mid
         else:

@@ -25,6 +25,9 @@ import json
 from FCBSA import run_fcbsa
 from HSJA.hsja import hsja
 
+from defence.jpeg import runJPEG
+
+
 if __name__ == '__main__':
 
     model = get_model(CFG.MODEL)
@@ -56,7 +59,8 @@ if __name__ == '__main__':
         }
 
         # Check if defence classifies correctly
-        defence_check = decision_function(model, [sample], params)
+        defence_imgs = runJPEG([sample], sample)
+        defence_check = decision_function(model, defence_imgs, params)
 
         if defence_check:
             print("Target model can't classifiy defence image")
@@ -85,5 +89,6 @@ if __name__ == '__main__':
         
     if CFG.RUN_EVAL:
         padding_queries(experiments)
+        plot_all_experiments(experiments)
         plot_median(experiments)
         plot_success_rate(experiments)
