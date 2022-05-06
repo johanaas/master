@@ -49,19 +49,18 @@ if __name__ == '__main__':
             max_iteration=CFG.NUM_IMAGES,
             show_time=True)
 
-        # TODO: Fetch original_label fra valid set
         original_label = np.argmax(model.predict(sample))
         true_label = labels[i]
 
-        print("Predicted class:\t", original_label, get_imagenet_classname(original_label))
-        print("True class:\t\t", true_label, get_classname(true_label))
+        #print("Predicted class:\t", original_label, get_imagenet_classname(original_label))
+        #print("True class:\t\t", true_label, get_classname(true_label))
 
-        if get_classname(true_label) == get_imagenet_classname(original_label):
+        if get_classname(true_label) != get_imagenet_classname(original_label):
+            # Discard if original_label != label_validation_dataset
+            print("Misclassified sample: contiune ... ")
             counter += 1
+            continue
         
-        # TODO: Discard if original_label != label_validation_dataset
-
-        continue
         
         params = {
                 "original_label": original_label,
@@ -99,7 +98,7 @@ if __name__ == '__main__':
         with open('checkpoint/query_counter_eval_exp.json', 'w') as f:
             json.dump(query_counter.eval_exp, f)   
 
-    print("Corerctly classified:", counter)
+    print("Misclassified samples:", counter)
 
     if CFG.RUN_EVAL:
         padding_queries(experiments)
