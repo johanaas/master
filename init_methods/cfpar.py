@@ -9,7 +9,6 @@ from utils.compute_distance import compute_distance
 import cv2
 import scipy.fftpack as fp
 import copy
-import jenkspy
 
 def create_fperturb_binary_seach_in_different_freq(img, model, params):
     
