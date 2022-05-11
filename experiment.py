@@ -41,11 +41,12 @@ if __name__ == '__main__':
     query_counter.init_queries()
     init_plotting(experiments)
 
-    experiment_id = "checkpoint/{}_imgs_{}_model_{}_defence_{}.pickle".format(
+    experiment_id = "checkpoint/{}_imgs_{}_model_{}_defence_{}_seed_{}.pickle".format(
         "_".join(CFG.EXPERIMENTS).replace(".", "_"),
         CFG.CAP_IMGS,
         CFG.MODEL,
-        CFG.DEFENCE
+        CFG.DEFENCE,
+        CFG.SEED
       )
 
     counter = 0
