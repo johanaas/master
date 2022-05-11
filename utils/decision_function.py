@@ -4,6 +4,7 @@ import evaluation
 import config as CFG
 
 from utils.clip_image import clip_image
+from utils.compute_distance import compute_distance
 from defence.jpeg import runJPEG
 
 def decision_function(model, images, params, org_img = []):
@@ -30,7 +31,7 @@ def decision_function(model, images, params, org_img = []):
 				continue
 
 			if np.argmax(prob[i]) != params['original_label']:
-				dist = np.linalg.norm(img - org_img)
+				dist = compute_distance(img, org_img)
 				evaluation.add_dist_queries(dist)
 				query_counter.prev_dist = dist
 			else:
