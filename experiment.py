@@ -41,6 +41,13 @@ if __name__ == '__main__':
     query_counter.init_queries()
     init_plotting(experiments)
 
+    experiment_id = "checkpoint/{}_imgs_{}_model_{}_defence_{}.pickle".format(
+        "_".join(CFG.EXPERIMENTS),
+        CFG.CAP_IMGS,
+        CFG.MODEL,
+        CFG.DEFENCE
+      )
+
     counter = 0
 
     for i, sample in enumerate(dataset):
@@ -106,12 +113,7 @@ if __name__ == '__main__':
             #axs[1].set_title(str(np.argmax(model.predict(perturbed))))
             #plt.show()
         
-        with open('checkpoint/query_counter_eval_exp.pickle', 'wb') as handle:
+        with open(experiment_id, 'wb') as handle:
             pickle.dump(query_counter.eval_exp, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print("Misclassified samples:", counter)
-
-    if CFG.RUN_EVAL:
-        padding_queries(experiments)
-        plot_median(experiments)
-        plot_success_rate(experiments)
