@@ -42,7 +42,7 @@ if __name__ == '__main__':
     init_plotting(experiments)
 
     experiment_id = "checkpoint/{}_imgs_{}_model_{}_defence_{}.pickle".format(
-        "_".join(CFG.EXPERIMENTS),
+        "_".join(CFG.EXPERIMENTS).replace(".", "_"),
         CFG.CAP_IMGS,
         CFG.MODEL,
         CFG.DEFENCE
