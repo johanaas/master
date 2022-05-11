@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     for i, sample in enumerate(dataset):
 
-        if (i - counter) >= (CFG.CAP_IMGS - 1):
+        if (i - counter) >= CFG.CAP_IMGS:
             break
 
         print_sample_progress(
