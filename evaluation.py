@@ -37,8 +37,8 @@ def plot_all_experiments(experiements):
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     #plt.show()
 
-def load_from_file(experiements):
-    with open('checkpoint/query_counter_eval_exp.pickle', 'rb') as handle:
+def load_from_file(experiements, experiment_id):
+    with open(experiment_id, 'rb') as handle:
         qc.eval_exp = pickle.load(handle)
 
 def plot_median(experiements):
@@ -145,6 +145,15 @@ def plot_success_rate(experiements):
 if __name__ == '__main__':
     qc.init_queries()
     experiments = CFG.EXPERIMENTS
-    load_from_file(experiments)
+
+    experiment_id = "checkpoint/{}_imgs_{}_model_{}_defence_{}_seed_{}.pickle".format(
+        "_".join(CFG.EXPERIMENTS).replace(".", "_"),
+        CFG.CAP_IMGS,
+        CFG.MODEL,
+        CFG.DEFENCE,
+        CFG.SEED
+    )
+
+    load_from_file(experiments, experiment_id)
 
     # Call your evalatuon methods
