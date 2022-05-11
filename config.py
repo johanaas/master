@@ -8,7 +8,7 @@ SEED = 16
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["dyn-fcbsa2.5"] #, "hsja"]#["fcbsa", "dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
+EXPERIMENTS = ["dyn-fcbsa2"] #["dyn-fcbsa2", "hsja"]#["fcbsa", "dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
 
 
 # List of experiments that use HSJA. Name have to match the
@@ -24,8 +24,9 @@ MAX_NUM_QUERIES = 1000
 # The number of images to load from the dataset
 # An adversarial example is generated for each image
 # per experiment
-NUM_IMAGES = 5
-
+CAP_IMGS = 500
+BUFFER = 0.5
+NUM_IMAGES = int(CAP_IMGS * BUFFER) + CAP_IMGS
 
 # The model to use
 # Supported values: "resnet50 | resnet101"
@@ -55,7 +56,7 @@ LOG_DIR = "logs"
 
 
 # Collect distance and queries in order to plot graphs
-RUN_EVAL = False
+RUN_EVAL = True
 
 # Print median and average distances for each iteration
 PRINT_ITERATION_MEDIANS_AND_MEANS = True

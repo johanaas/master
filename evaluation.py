@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import itertools
 from datetime import datetime
+import pickle
+import config as CFG
 
 def init_plotting(experiements):
     for exp in experiements:
@@ -35,6 +37,9 @@ def plot_all_experiments(experiements):
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     #plt.show()
 
+def load_from_file(experiements):
+    with open('checkpoint/query_counter_eval_exp.pickle', 'rb') as handle:
+        qc.eval_exp = pickle.load(handle)
 
 def plot_median(experiements):
 
@@ -68,9 +73,32 @@ def plot_median(experiements):
         #print("y: ", y)
         plt.plot(x, y, "{}-".format(list_of_colors[i]))
     plt.legend(experiements)
+    #plt.yscale("log")
+    plt.xlabel("Number of Queries")
+    plt.ylabel(r'$l_2$ Distance')
+    plt.ylim(bottom=0)
+    plt.grid()
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     plt.show()
 
+
+def plot_queries_used():
+    end_queries = []
+    
+    for img in qc.eval_exp["dyn-fcbsa2"]: # img: [(), (), ()]
+        end_dist = img[-1][0]
+        end_query = img[-1][1]
+        end_queries.append(end_query)
+
+
+    # Find max query and round up to closest hundred
+    max_query = np.max(end_queries)
+    print(max_query)
+    rounded_max_query = int(np.ceil(max_query / 100)) * 100
+
+    
+    plt.hist(end_queries, bins=int(rounded_max_query/100), range=(0,rounded_max_query))
+    plt.show()
 
 def padding_queries(experiements):
 
@@ -92,7 +120,9 @@ def plot_success_rate(experiements):
 
     for i, exp in enumerate(experiements):
         end_dist[exp] = []
+        
         for img in qc.eval_exp[exp]: # img: [(), (), ()]
+            
             end_dist[exp].append(img[-1][0])
 
     
@@ -105,5 +135,16 @@ def plot_success_rate(experiements):
             y.append(s_rate)
         plt.plot(x, y, "{}-".format(list_of_colors[j]))
     plt.legend(experiements)
+    plt.ylabel("Success Rate")
+    plt.xlabel(r'$l_2$ Distance')
+    plt.grid()
     plt.savefig("results/{}.png".format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')))
     plt.show()
+
+
+if __name__ == '__main__':
+    qc.init_queries()
+    experiments = CFG.EXPERIMENTS
+    load_from_file(experiments)
+
+    # Call your evalatuon methods

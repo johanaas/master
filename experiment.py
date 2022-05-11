@@ -9,7 +9,7 @@ import query_counter
 from init_methods import get_start_image
 from models import get_model
 from datasets import get_dataset
-from evaluation import start_eval_experiment, init_plotting, add_dist_queries, plot_all_experiments, plot_median, padding_queries, plot_success_rate
+from evaluation import start_eval_experiment, init_plotting, add_dist_queries, plot_all_experiments, plot_median, padding_queries, plot_success_rate, plot_queries_used, load_from_file
 
 from utils.run_hsja import run_hsja
 from utils.binary_search import binary_search
@@ -23,6 +23,7 @@ from utils.decision_function import decision_function
 from utils.imagenet_human_readable_labels import get_classname, get_imagenet_classname
 
 import json
+import pickle
 
 from FCBSA import run_fcbsa
 from HSJA.hsja import hsja
@@ -43,6 +44,9 @@ if __name__ == '__main__':
     counter = 0
 
     for i, sample in enumerate(dataset):
+
+        if (i - counter) >= (CFG.CAP_IMGS - 1):
+            break
 
         print_sample_progress(
             current_iteration=i+1,
@@ -71,12 +75,15 @@ if __name__ == '__main__':
         }
 
         # Check if defence classifies correctly
-        defence_check = decision_function(model, [sample], params)
-
-        if defence_check:
-            print("Target model can't classifiy defence image")
-            print("Skipping image ...")
-            continue
+        if CFG.DEFENCE != None:
+            defence_check = decision_function(model, [sample], params)
+            
+            # If adversarial: Skip image
+            if defence_check:
+                print("Target model can't classifiy defence image")
+                print("Skipping image ...")
+                counter += 1
+                continue
 
         for j, experiment in enumerate(experiments):
             query_counter.reset_queries()
@@ -89,14 +96,18 @@ if __name__ == '__main__':
             else:
                 perturbed = run_fcbsa(experiment, model, sample, params)
 
+            success = decision_function(model, perturbed[None], params)
+            print("Adversarial?: ", success)
+
             #fig, axs = plt.subplots(1,2)
             #axs[0].imshow(sample)
             #axs[0].set_title(str(np.argmax(model.predict(sample))))
             #axs[1].imshow(perturbed)
             #axs[1].set_title(str(np.argmax(model.predict(perturbed))))
             #plt.show()
-        with open('checkpoint/query_counter_eval_exp.json', 'w') as f:
-            json.dump(query_counter.eval_exp, f)   
+        
+        with open('checkpoint/query_counter_eval_exp.pickle', 'wb') as handle:
+            pickle.dump(query_counter.eval_exp, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print("Misclassified samples:", counter)
 

@@ -38,41 +38,28 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
             assert num_evals < 1e4,"Initialization failed! "
             "Use a misclassified image as `target_image`" 
 
-    print("Init: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
 
     # Binary search in the different frequency bands
-    #for band in freq_bands:
-    #    perturbed = frequnecy_band_binary_search(band, perturbed, sample, model, params, freq_params, masks)
+
     perturbed = frequnecy_band_binary_search("low", perturbed, sample, model, params, freq_params, masks)
-    print("After low: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
+    
     perturbed = frequnecy_band_binary_search("medium", perturbed, sample, model, params, freq_params, masks)
-    print("After med: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
+    
     perturbed = frequnecy_band_binary_search("high", perturbed, sample, model, params, freq_params, masks)
-    print("After BS: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
 
     # Perform PAR
     perturbed = get_par_patches(sample, model, params, noise=np.copy(perturbed), plot_each_step=False)
     perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
-    print("After PAR: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
 
     # Last BS
     perturbed = binary_search(model, sample, perturbed, params)
     perturbed = clip_image(perturbed, params['clip_min'], params['clip_max'])
-    print("Last BS: ", np.argmax(model.predict(perturbed)))
-    assert np.argmax(model.predict(perturbed)) != original_label
-
-    print("L2: ", np.linalg.norm(sample - perturbed))
 
     return perturbed
 
 def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_params, masks):
     
-    #print("CHECK *** BS: ", np.argmax(model.predict(perturbed)))
+   
     # Upper and lower bound
     low = 0.0
     high = 1.0
@@ -115,7 +102,7 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
         # If the blended image is adversarial: True
         final_image = clip_image(final_image, params['clip_min'], params['clip_max'])
         success = decision_function(model, final_image[None], params, img)
-        print(success, compute_distance(final_image, img))
+        
         if success:
             high = mid
         else:

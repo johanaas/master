@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import cv2
 import copy
 import query_counter 
+from utils.clip_image import clip_image
 
 def runJPEG(images, ori_img):
 
@@ -36,14 +37,9 @@ def runJPEG(images, ori_img):
         final_image = np.dstack([transformed_channels[0].astype(float), 
                                 transformed_channels[1].astype(float), 
                                 transformed_channels[2].astype(float)])
-
-        #if query_counter.active_exp == "hsja":
-        #    plt.imshow(final_image)
-        #    plt.show()
+        final_image = clip_image(final_image, 0, 1)
 
         new_images.append(final_image)
 
-    #plt.imshow(final_image)
-    #plt.show()
 
     return new_images
