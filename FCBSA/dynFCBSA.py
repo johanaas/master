@@ -12,14 +12,14 @@ from matplotlib import pyplot as plt
 
 from utils.clip_image import clip_image
 
-def dynFCBSA(model, sample, params, sigma = 0.5):
+def dynFCBSA(model, sample, params, alpha = 0.5):
 
     freq_bands = ["low", "medium", "high"]
     print("Start: ", np.argmax(model.predict(sample)))
     original_label = np.argmax(model.predict(sample))
 
     # Identify radius r_l and r_h
-    freq_params = select_freq_params(sample, sigma)
+    freq_params = select_freq_params(sample, alpha)
 
     # Create mask for each frequency band
     masks = create_masks(freq_params)
@@ -30,11 +30,15 @@ def dynFCBSA(model, sample, params, sigma = 0.5):
 
     if params['target_label'] is None:
         # Find a misclassified random noise.
+        perturb_phase = False
         while True:
-            perturbed, success = initial_perturbation(model, sample, params, freq_params, masks, sigma)
+            perturbed, success = initial_perturbation(model, sample, params, freq_params, masks, perturb_phase)
             num_evals += 1
             if success:
+                if perturb_phase:
+                    print("\n\nPhase was also perturbed!\n\n")
                 break
+            perturb_phase = True
             assert num_evals < 1e4,"Initialization failed! "
             "Use a misclassified image as `target_image`" 
 
@@ -148,7 +152,7 @@ def frequnecy_band_binary_search(band, perturbed, img, model, params, freq_param
     return final_image
 
 
-def initial_perturbation(model, img, params, freq_params, masks, sigma):
+def initial_perturbation(model, img, params, freq_params, masks, perturb_phase=False):
 
     # Append noise in each channel of RGB image
     transformed_channels = []
@@ -163,16 +167,20 @@ def initial_perturbation(model, img, params, freq_params, masks, sigma):
         min_magnitude = np.min(magnitude)
         max_magnitude = np.max(magnitude)
         channel_mean = freq_params[k]["mean"]
+        channel_std = freq_params[k]["sigma"]
         
         # Append noise in each of the frequencies
-        high_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=min_magnitude, high=freq_params[k]["left_clip_tail"], shape=magnitude.shape, mask=masks[k]["high"])
+        high_distribution = get_truncated_normal(mean=channel_mean, sd=channel_std, low=min_magnitude, high=freq_params[k]["left_clip_tail"], shape=magnitude.shape, mask=masks[k]["high"])
         magnitude[masks[k]["high"]] = high_distribution[masks[k]["high"]]
 
-        medium_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=freq_params[k]["left_clip_tail"], high=freq_params[k]["right_clip_tail"], shape=magnitude.shape, mask=masks[k]["medium"])
+        medium_distribution = get_truncated_normal(mean=channel_mean, sd=channel_std, low=freq_params[k]["left_clip_tail"], high=freq_params[k]["right_clip_tail"], shape=magnitude.shape, mask=masks[k]["medium"])
         magnitude[masks[k]["medium"]] = medium_distribution[masks[k]["medium"]]  
 
-        low_distribution = get_truncated_normal(mean=channel_mean, sd=sigma, low=freq_params[k]["right_clip_tail"], high=max_magnitude, shape=magnitude.shape, mask=masks[k]["low"])
+        low_distribution = get_truncated_normal(mean=channel_mean, sd=channel_std, low=freq_params[k]["right_clip_tail"], high=max_magnitude, shape=magnitude.shape, mask=masks[k]["low"])
         magnitude[masks[k]["low"]] = low_distribution[masks[k]["low"]]  
+
+        if perturb_phase:
+            phase = np.random.uniform(0, np.pi, phase.shape)
 
         # Inverse the Fourier Transformation with phase and perturbed magnitude 
         magnitude = np.exp(magnitude)
@@ -232,25 +240,28 @@ def create_masks(freq_params):
     return masks
 
 
-def select_freq_params(img, sigma):
+def select_freq_params(img, alpha):
     freq_params = {
         0: {
             "radius": (),
             "right_clip_tail": -1,
             "left_clip_tail": -1,
             "mean": -1,
+            "sigma": -1
         },
         1: {
             "radius": (),
             "right_clip_tail": -1,
             "left_clip_tail": -1,
             "mean": -1,
+            "sigma": -1
         },
         2: {
             "radius": (),
             "right_clip_tail": -1,
             "left_clip_tail": -1,
             "mean": -1,
+            "sigma": -1
         },
     }
 
@@ -258,11 +269,12 @@ def select_freq_params(img, sigma):
         rgb_fft = np.fft.fftshift(np.fft.fft2((img[:, :, k])))
         magnitude = np.log(np.abs(rgb_fft))
         explore_mag = magnitude.flatten()
-        standard_dev = np.std(explore_mag) * sigma
+        standard_dev = np.std(explore_mag)
         origin = np.average(explore_mag)
         v["mean"] = origin
-        v["right_clip_tail"] = origin + standard_dev
-        v["left_clip_tail"] = origin - standard_dev
+        v["sigma"] = standard_dev
+        v["right_clip_tail"] = origin + standard_dev * alpha
+        v["left_clip_tail"] = origin - standard_dev * alpha
         
 
         right_freq_tail = (magnitude > v["right_clip_tail"]).astype(int)
