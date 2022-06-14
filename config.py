@@ -2,13 +2,13 @@
 
 # Main seed. If not None it will be used as a seed for
 # numpy and pythons random module
-SEED = 16
+SEED = 47
 
 # Experiments to run. One experiment consists of using that
 # specific method to generate a starting point, and then
 # performing HSJA for MAX_NUM_QUERIES.
 # Supported values: ["random", "par"]
-EXPERIMENTS = ["dyn-fcbsa2"] #["dyn-fcbsa2", "hsja"]#["fcbsa", "dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
+EXPERIMENTS = ["dyn-fcbsa2", "hsja"]#["dyn-fcbsa0.5", "dyn-fcbsa1", "dyn-fcbsa1.5", "dyn-fcbsa2", "dyn-fcbsa2.5", "dyn-fcbsa3"]
 
 
 # List of experiments that use HSJA. Name have to match the
@@ -25,17 +25,17 @@ MAX_NUM_QUERIES = 1000
 # An adversarial example is generated for each image
 # per experiment
 CAP_IMGS = 500
-BUFFER = 0.5
+BUFFER = 2.5
 NUM_IMAGES = int(CAP_IMGS * BUFFER) + CAP_IMGS
 
 # The model to use
 # Supported values: "resnet50 | resnet101"
-MODEL = "resnet50"
+MODEL = "vgg19"
 
 
 # Choose if or which defence to use
 # Supported values: "None | JPEG"
-DEFENCE = None
+DEFENCE = "None"
 
 
 # The dataset to use

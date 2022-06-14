@@ -273,8 +273,8 @@ def select_freq_params(img, alpha):
         origin = np.average(explore_mag)
         v["mean"] = origin
         v["sigma"] = standard_dev
-        v["right_clip_tail"] = origin + standard_dev * alpha
-        v["left_clip_tail"] = origin - standard_dev * alpha
+        v["right_clip_tail"] = origin + standard_dev * 3
+        v["left_clip_tail"] = origin - standard_dev * 2
         
 
         right_freq_tail = (magnitude > v["right_clip_tail"]).astype(int)

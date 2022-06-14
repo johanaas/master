@@ -9,6 +9,7 @@ from .InceptionV3 import InceptionV3
 from .ResNet50V2 import ResNet50V2
 from .EfficientNetB7 import EfficientNetB7
 from .DenseNet201 import DenseNet201
+from .adv_Resnet50 import adv_ResnetModel50
 
 def get_model(name):
   if name == "resnet50":
@@ -33,5 +34,7 @@ def get_model(name):
     return EfficientNetB7()
   elif name == "denseNet201": # Don't work
     return DenseNet201()
+  elif name == "adv_resnet50":
+    return adv_ResnetModel50()
   else:
     raise ValueError("No model with name:", name)
